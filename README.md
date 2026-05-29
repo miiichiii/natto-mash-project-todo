@@ -7,3 +7,5 @@ Public URL: https://miiichiii.github.io/natto-mash-project-todo/
 Site content is maintained in `index.md`.
 
 Do not add raw animal IDs, unpublished exact numerical results, sample storage locations, internal budgets, personal contact details, or private file paths.
+
+Crawler policy: the site includes `robots.txt` and `noindex` meta tags to discourage indexing. This is not access control.
