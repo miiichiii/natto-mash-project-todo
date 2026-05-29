@@ -8,6 +8,8 @@ publish: true
 
 Status: Public draft
 Last updated: 2026-05-29
+Public URL: https://miiichiii.github.io/natto-mash-project-todo/
+GitHub repository: https://github.com/miiichiii/natto-mash-project-todo
 
 ## 概要
 
