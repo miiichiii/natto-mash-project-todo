@@ -1,0 +1,10 @@
+theme: jekyll-theme-minimal
+title: Natto_MASH Project Todo
+description: Public planning board for the Natto_MASH research project.
+plugins:
+  - jekyll-optional-front-matter
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default
