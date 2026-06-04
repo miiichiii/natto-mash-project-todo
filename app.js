@@ -17,7 +17,6 @@ import {
   query,
   serverTimestamp,
   updateDoc,
-  writeBatch,
 } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -42,130 +41,6 @@ const columns = [
   { id: "done", label: "Archive", title: "完了" },
 ];
 
-const defaultTasks = [
-  {
-    id: "rna-sample-table-20260605",
-    title: "macrophage RNA-seq提出用サンプル表を完成させる",
-    detail: "source sample ID、tube label、ISOGEN量を埋めて発注相談へ進める。",
-    due: "2026-06-05",
-    column: "now",
-    owner: "Hamada",
-    tag: "RNA-seq",
-    tone: "green",
-    order: 10,
-  },
-  {
-    id: "rna-order-conditions-20260607",
-    title: "macrophage RNA-seqの発注条件を固める",
-    detail: "見積、必要量、送付条件、納期、ISOGEN受入可否を記録する。",
-    due: "2026-06-07",
-    column: "rna",
-    owner: "Hamada",
-    tag: "Order",
-    tone: "blue",
-    order: 20,
-  },
-  {
-    id: "liposearch-samples-20260612",
-    title: "LipoSEARCH採用サンプルと除外理由を決める",
-    detail: "血清量、freeze-thaw、溶血、チューブ不良を整理して決定する。",
-    due: "2026-06-12",
-    column: "mouse",
-    owner: "Hamada",
-    tag: "LipoSEARCH",
-    tone: "red",
-    order: 30,
-  },
-  {
-    id: "pathology-fibrosis-20260614",
-    title: "第2コホート肝臓病理画像と線維化first pass",
-    detail: "代表画像と線維化面積またはスコアの初版を作る。",
-    due: "2026-06-14",
-    column: "mouse",
-    owner: "Student",
-    tag: "Pathology",
-    tone: "pink",
-    order: 40,
-  },
-  {
-    id: "sample-master-v1-20260614",
-    title: "sample master table v1を作る",
-    detail: "主要サンプル、病理、血清、16S、十二指腸を横断的に追える状態にする。",
-    due: "2026-06-14",
-    column: "analysis",
-    owner: "Student",
-    tag: "Master",
-    tone: "gold",
-    order: 50,
-  },
-  {
-    id: "serum-cytokine-decision-20260617",
-    title: "血清サイトカイン測定の実施可否を判断する",
-    detail: "血清残量と優先順位を確認し、測定候補を固定する。",
-    due: "2026-06-17",
-    column: "mouse",
-    owner: "Hamada",
-    tag: "Serum",
-    tone: "blue",
-    order: 60,
-  },
-  {
-    id: "macrophage-facs-cytokine-20260618",
-    title: "macrophage FACS/上清サイトカイン条件を固定する",
-    detail: "パネル、上清測定、追加購入候補を決める。",
-    due: "2026-06-18",
-    column: "validation",
-    owner: "Hamada",
-    tag: "FACS",
-    tone: "green",
-    order: 70,
-  },
-  {
-    id: "firebase-mvp-20260620",
-    title: "Firebase Todo app MVPを仕上げる",
-    detail: "Google login、Todo一覧、checkbox保存、期限表示を確認する。",
-    due: "2026-06-20",
-    column: "analysis",
-    owner: "Hamada",
-    tag: "App",
-    tone: "pink",
-    order: 80,
-  },
-  {
-    id: "tyr140ga-splicing-20260620",
-    title: "Tyr140G>A splicing解析の見積と陽性対照を判断する",
-    detail: "見積取得とB6 Albino Tyr291G>T陽性対照の追加可否を決める。",
-    due: "2026-06-20",
-    column: "rna",
-    owner: "Hamada",
-    tag: "Splicing",
-    tone: "blue",
-    order: 90,
-  },
-  {
-    id: "duodenum-qpcr-plan",
-    title: "十二指腸qPCR候補遺伝子リストを作る",
-    detail: "バリア、脂質吸収、胆汁酸/コレステロール代謝、炎症応答を候補にする。",
-    due: "",
-    column: "rna",
-    owner: "Student",
-    tag: "Duodenum",
-    tone: "green",
-    order: 100,
-  },
-  {
-    id: "figure-plan-v1",
-    title: "Figure構成案を作る",
-    detail: "model、血清生化学、病理、LipoSEARCH、16S、macrophage RNA-seqを整理する。",
-    due: "",
-    column: "analysis",
-    owner: "Hamada",
-    tag: "Figure",
-    tone: "gold",
-    order: 110,
-  },
-];
-
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -175,11 +50,11 @@ provider.setCustomParameters({ prompt: "select_account" });
 const state = {
   user: null,
   allowed: false,
-  tasks: defaultTasks,
+  tasks: [],
+  view: "checking",
   live: false,
   savingIds: new Set(),
   unsubscribe: null,
-  seeded: false,
 };
 
 const elements = {
@@ -240,62 +115,49 @@ onAuthStateChanged(auth, (user) => {
   updateAuthUI();
 
   if (!user) {
-    state.tasks = defaultTasks;
-    setStatus("Preview");
+    state.tasks = [];
+    state.view = "signed-out";
+    setStatus("Login required");
     render();
     return;
   }
 
   if (!state.allowed) {
-    state.tasks = defaultTasks;
+    state.tasks = [];
+    state.view = "unauthorized";
     setStatus("許可されていないアカウントです。");
     render();
     return;
   }
 
+  state.tasks = [];
+  state.view = "loading";
   setStatus("Firestore loading");
+  render();
   subscribeTasks();
 });
 
 function subscribeTasks() {
   const tasksQuery = query(collection(db, COLLECTION), orderBy("order"));
   state.unsubscribe = onSnapshot(tasksQuery, async (snapshot) => {
-    if (snapshot.empty && !state.seeded) {
-      state.seeded = true;
-      await seedDefaultTasks();
-      return;
-    }
-
     state.live = true;
+    state.view = "live";
     state.tasks = snapshot.docs.map((taskDoc) => normalizeTask({ id: taskDoc.id, ...taskDoc.data() }));
     setStatus("Firestore synced");
     render();
   }, (error) => {
     state.live = false;
-    state.tasks = defaultTasks;
+    state.view = "error";
+    state.tasks = [];
     setStatus(`Firestore error: ${error.code}`);
     render();
   });
 }
 
-async function seedDefaultTasks() {
-  const batch = writeBatch(db);
-  defaultTasks.forEach((task) => {
-    const ref = doc(db, COLLECTION, task.id);
-    batch.set(ref, {
-      ...task,
-      done: false,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
-  });
-  await batch.commit();
-}
-
 async function toggleTask(task, done, checkbox) {
   if (!state.user) {
     checkbox.checked = !done;
-    setStatus("Googleログイン待ち");
+    setStatus("Login required");
     return;
   }
 
@@ -325,6 +187,16 @@ async function toggleTask(task, done, checkbox) {
 }
 
 function render() {
+  if (state.view !== "live") {
+    elements.totalCount.textContent = "0";
+    elements.doneCount.textContent = "0";
+    elements.soonCount.textContent = "0";
+    elements.board.classList.add("is-locked");
+    elements.board.replaceChildren(renderAccessGate());
+    return;
+  }
+
+  elements.board.classList.remove("is-locked");
   const tasks = state.tasks.map(normalizeTask);
   const doneCount = tasks.filter((task) => task.done).length;
   const soonCount = tasks.filter((task) => !task.done && dueClass(task.due) === "soon").length;
@@ -360,6 +232,44 @@ function render() {
 
     elements.board.append(section);
   });
+}
+
+function renderAccessGate() {
+  const gate = document.createElement("section");
+  gate.className = "access-gate";
+
+  const title = document.createElement("h2");
+  const body = document.createElement("p");
+
+  if (state.view === "checking") {
+    title.textContent = "認証状態を確認中";
+    body.textContent = "しばらくお待ちください。";
+  } else if (state.view === "loading") {
+    title.textContent = "タスクを読み込み中";
+    body.textContent = "Firestoreから最新のタスクを取得しています。";
+  } else if (state.view === "unauthorized") {
+    title.textContent = "閲覧権限がありません";
+    body.textContent = "許可されたGoogleアカウントでログインしてください。";
+  } else if (state.view === "error") {
+    title.textContent = "タスクを読み込めません";
+    body.textContent = "ログイン状態またはFirestore権限を確認してください。";
+  } else {
+    title.textContent = "ログインが必要です";
+    body.textContent = "許可されたGoogleアカウントでログインするとタスクが表示されます。";
+  }
+
+  gate.append(title, body);
+
+  if (state.view === "signed-out") {
+    const login = document.createElement("button");
+    login.type = "button";
+    login.className = "button primary";
+    login.textContent = "Googleでログイン";
+    login.addEventListener("click", () => elements.loginButton.click());
+    gate.append(login);
+  }
+
+  return gate;
 }
 
 function renderTask(task) {

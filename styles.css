@@ -195,6 +195,42 @@ main {
   scroll-snap-type: x proximity;
 }
 
+.board.is-locked {
+  display: grid;
+  grid-auto-flow: row;
+  grid-auto-columns: auto;
+  min-height: calc(100vh - 176px);
+  overflow-x: visible;
+  place-items: center;
+}
+
+.access-gate {
+  display: grid;
+  gap: 14px;
+  width: min(100%, 520px);
+  padding: 28px;
+  background: rgba(255, 250, 242, 0.74);
+  border: 1px solid rgba(120, 90, 70, 0.16);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.access-gate h2 {
+  margin: 0;
+  font-size: 1.18rem;
+  line-height: 1.25;
+}
+
+.access-gate p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.access-gate .button {
+  justify-self: start;
+}
+
 .column {
   display: grid;
   grid-template-rows: auto 1fr;
