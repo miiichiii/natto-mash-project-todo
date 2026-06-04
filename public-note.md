@@ -242,6 +242,10 @@ qPCR候補カテゴリ:
   - Google login enabled.
   - Cloud Firestore configured.
   - Access is restricted to approved project members.
+- [x] 2026-06-04: 公開ページをKanban styleのFirebase Todo appへ変更した。
+  - Login button added.
+  - Checkbox UI added.
+  - Initial cards are grouped by workstream.
 - [ ] 2026-06-14: Todo初期データを作る。
 - [ ] 2026-06-20: checkbox更新がFirestoreへ保存されるMVPを作る。
 - [ ] 2026-06-21: deploy先を決める。

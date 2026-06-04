@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive,noimageindex,nosnippet">
+  <meta name="googlebot" content="noindex,nofollow,noarchive,noimageindex,nosnippet">
+  <title>Natto_MASH Board</title>
+  <link rel="preconnect" href="https://www.gstatic.com">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="title-block">
+      <p class="kicker">Natto_MASH</p>
+      <h1>Project Board</h1>
+    </div>
+
+    <div class="auth-panel" aria-live="polite">
+      <div class="auth-copy">
+        <span id="authState" class="auth-state">未ログイン</span>
+        <span id="authEmail" class="auth-email"></span>
+      </div>
+      <button id="loginButton" class="button primary" type="button">Googleでログイン</button>
+      <button id="logoutButton" class="button ghost hidden" type="button">ログアウト</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="overview" aria-label="Project status">
+      <div class="metric">
+        <span class="metric-label">Total</span>
+        <strong id="totalCount">0</strong>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Done</span>
+        <strong id="doneCount">0</strong>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Near due</span>
+        <strong id="soonCount">0</strong>
+      </div>
+      <div class="sync-status" id="syncStatus">Preview</div>
+    </section>
+
+    <section id="board" class="board" aria-label="Todo board"></section>
+  </main>
+
+  <template id="columnTemplate">
+    <section class="column">
+      <div class="column-head">
+        <div>
+          <p class="column-label"></p>
+          <h2></h2>
+        </div>
+        <span class="column-count"></span>
+      </div>
+      <div class="task-list"></div>
+    </section>
+  </template>
+
+  <template id="taskTemplate">
+    <article class="task-card">
+      <label class="check-wrap">
+        <input class="task-check" type="checkbox">
+        <span class="check-visual" aria-hidden="true"></span>
+      </label>
+      <div class="task-main">
+        <div class="task-meta">
+          <span class="tag"></span>
+          <time></time>
+        </div>
+        <h3></h3>
+        <p class="task-detail"></p>
+        <div class="task-foot">
+          <span class="owner"></span>
+          <span class="state-pill"></span>
+        </div>
+      </div>
+    </article>
+  </template>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
