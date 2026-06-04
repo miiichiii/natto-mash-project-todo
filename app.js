@@ -6,7 +6,6 @@ import {
   onAuthStateChanged,
   setPersistence,
   signInWithPopup,
-  signInWithRedirect,
   signOut,
 } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
 import {
@@ -205,11 +204,20 @@ elements.loginButton.addEventListener("click", async () => {
   try {
     await signInWithPopup(auth, provider);
   } catch (error) {
-    if (["auth/popup-blocked", "auth/popup-closed-by-user", "auth/cancelled-popup-request"].includes(error.code)) {
-      setStatus(error.code === "auth/popup-closed-by-user" ? "ログインが中断されました。" : "Redirect login");
-      if (error.code !== "auth/popup-closed-by-user") {
-        await signInWithRedirect(auth, provider);
-      }
+    if (error.code === "auth/popup-closed-by-user") {
+      setStatus("ログインが中断されました。");
+      return;
+    }
+    if (["auth/popup-blocked", "auth/cancelled-popup-request"].includes(error.code)) {
+      setStatus("ポップアップを許可して、もう一度ログインしてください。");
+      return;
+    }
+    if (error.code === "auth/unauthorized-domain") {
+      setStatus("このドメインがFirebase Authで未許可です。");
+      return;
+    }
+    if (error.code === "auth/web-storage-unsupported") {
+      setStatus("ブラウザのストレージが無効です。設定を確認してください。");
       return;
     }
     setStatus(`Login error: ${error.code}`);
