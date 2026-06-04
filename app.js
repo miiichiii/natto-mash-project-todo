@@ -9,6 +9,7 @@ import {
   signOut,
 } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
 import {
+  addDoc,
   collection,
   doc,
   getFirestore,
@@ -53,6 +54,7 @@ const state = {
   tasks: [],
   view: "checking",
   live: false,
+  creating: false,
   savingIds: new Set(),
   unsubscribe: null,
 };
@@ -69,7 +71,28 @@ const elements = {
   soonCount: document.getElementById("soonCount"),
   columnTemplate: document.getElementById("columnTemplate"),
   taskTemplate: document.getElementById("taskTemplate"),
+  taskDialog: document.getElementById("taskDialog"),
+  taskForm: document.getElementById("taskForm"),
+  taskDialogTitle: document.getElementById("taskDialogTitle"),
+  taskColumn: document.getElementById("taskColumn"),
+  taskTitle: document.getElementById("taskTitle"),
+  taskDetail: document.getElementById("taskDetail"),
+  taskDue: document.getElementById("taskDue"),
+  taskOwner: document.getElementById("taskOwner"),
+  taskTag: document.getElementById("taskTag"),
+  taskTone: document.getElementById("taskTone"),
+  taskFormStatus: document.getElementById("taskFormStatus"),
+  cancelTaskButton: document.getElementById("cancelTaskButton"),
+  cancelTaskIconButton: document.getElementById("cancelTaskIconButton"),
+  saveTaskButton: document.getElementById("saveTaskButton"),
 };
+
+columns.forEach((column) => {
+  const option = document.createElement("option");
+  option.value = column.id;
+  option.textContent = column.title;
+  elements.taskColumn.append(option);
+});
 
 setPersistence(auth, browserLocalPersistence).catch((error) => {
   setStatus(`Auth persistence error: ${error.code}`);
@@ -101,6 +124,19 @@ elements.loginButton.addEventListener("click", async () => {
 
 elements.logoutButton.addEventListener("click", async () => {
   await signOut(auth);
+});
+
+elements.taskForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  await createTaskFromForm();
+});
+
+elements.cancelTaskButton.addEventListener("click", closeTaskDialog);
+elements.cancelTaskIconButton.addEventListener("click", closeTaskDialog);
+
+elements.taskDialog.addEventListener("cancel", (event) => {
+  event.preventDefault();
+  closeTaskDialog();
 });
 
 onAuthStateChanged(auth, (user) => {
@@ -176,6 +212,7 @@ async function toggleTask(task, done, checkbox) {
       updatedAt: serverTimestamp(),
       updatedBy: state.user.email,
       completedAt: done ? serverTimestamp() : null,
+      needsObsidianSync: true,
     });
     setStatus(done ? "Marked done" : "Reopened");
   } catch (error) {
@@ -212,12 +249,15 @@ function render() {
     const label = columnNode.querySelector(".column-label");
     const title = columnNode.querySelector("h2");
     const count = columnNode.querySelector(".column-count");
+    const addButton = columnNode.querySelector(".add-task-button");
     const list = columnNode.querySelector(".task-list");
     const columnTasks = tasks.filter((task) => task.done ? column.id === "done" : task.column === column.id);
 
     label.textContent = column.label;
     title.textContent = column.title;
     count.textContent = String(columnTasks.length);
+    addButton.setAttribute("aria-label", `${column.title}にタスクを追加`);
+    addButton.addEventListener("click", () => openTaskDialog(column.id));
 
     if (!columnTasks.length) {
       const empty = document.createElement("div");
@@ -272,6 +312,79 @@ function renderAccessGate() {
   return gate;
 }
 
+function openTaskDialog(columnId) {
+  if (!state.allowed || !state.live) {
+    setStatus("保存できないアカウントです。");
+    return;
+  }
+
+  const column = columns.find((candidate) => candidate.id === columnId) || columns[0];
+  elements.taskForm.reset();
+  elements.taskColumn.value = column.id;
+  elements.taskOwner.value = defaultOwner();
+  elements.taskTone.value = defaultTone(column.id);
+  elements.taskTag.value = defaultTag(column.id);
+  elements.taskFormStatus.textContent = "";
+  elements.taskDialogTitle.textContent = `${column.title}に追加`;
+  elements.saveTaskButton.disabled = false;
+  elements.taskDialog.showModal();
+  elements.taskTitle.focus();
+}
+
+function closeTaskDialog() {
+  if (state.creating) return;
+  elements.taskDialog.close();
+}
+
+async function createTaskFromForm() {
+  if (!state.user || !state.allowed || !state.live || state.creating) {
+    elements.taskFormStatus.textContent = "保存できない状態です。";
+    return;
+  }
+
+  const title = elements.taskTitle.value.trim();
+  if (!title) {
+    elements.taskFormStatus.textContent = "タイトルを入力してください。";
+    elements.taskTitle.focus();
+    return;
+  }
+
+  const column = elements.taskColumn.value;
+  const done = column === "done";
+  const task = {
+    title,
+    detail: elements.taskDetail.value.trim(),
+    due: elements.taskDue.value,
+    column,
+    owner: elements.taskOwner.value.trim() || defaultOwner(),
+    tag: elements.taskTag.value.trim() || "Task",
+    tone: elements.taskTone.value,
+    order: nextOrder(column),
+    done,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+    createdBy: state.user.email,
+    updatedBy: state.user.email,
+    completedAt: done ? serverTimestamp() : null,
+    needsObsidianSync: true,
+  };
+
+  state.creating = true;
+  elements.saveTaskButton.disabled = true;
+  elements.taskFormStatus.textContent = "保存中";
+
+  try {
+    await addDoc(collection(db, COLLECTION), task);
+    setStatus("Task added");
+    elements.taskDialog.close();
+  } catch (error) {
+    elements.taskFormStatus.textContent = `Save error: ${error.code}`;
+  } finally {
+    state.creating = false;
+    elements.saveTaskButton.disabled = false;
+  }
+}
+
 function renderTask(task) {
   const taskNode = elements.taskTemplate.content.cloneNode(true);
   const card = taskNode.querySelector(".task-card");
@@ -306,6 +419,42 @@ function renderTask(task) {
   });
 
   return card;
+}
+
+function nextOrder(columnId) {
+  const columnOrders = state.tasks
+    .filter((task) => (task.done ? "done" : task.column) === columnId)
+    .map((task) => task.order)
+    .filter(Number.isFinite);
+
+  if (!columnOrders.length) {
+    return (columns.findIndex((column) => column.id === columnId) + 1) * 100;
+  }
+
+  return Math.max(...columnOrders) + 10;
+}
+
+function defaultOwner() {
+  if (!state.user?.email) return "Unassigned";
+  if (state.user.email.toLowerCase() === "hamamicchi@gmail.com") return "Hamada";
+  return state.user.email.split("@")[0];
+}
+
+function defaultTag(columnId) {
+  if (columnId === "rna") return "RNA-seq";
+  if (columnId === "mouse") return "Mouse";
+  if (columnId === "validation") return "FACS";
+  if (columnId === "analysis") return "Analysis";
+  if (columnId === "done") return "Archive";
+  return "Task";
+}
+
+function defaultTone(columnId) {
+  if (columnId === "mouse") return "red";
+  if (columnId === "rna" || columnId === "analysis") return "blue";
+  if (columnId === "validation") return "green";
+  if (columnId === "done") return "gold";
+  return "pink";
 }
 
 function normalizeTask(task) {

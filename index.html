@@ -7,7 +7,7 @@
   <meta name="googlebot" content="noindex,nofollow,noarchive,noimageindex,nosnippet">
   <title>Natto_MASH Board</title>
   <link rel="preconnect" href="https://www.gstatic.com">
-  <link rel="stylesheet" href="./styles.css?v=20260604-auth-lock">
+  <link rel="stylesheet" href="./styles.css?v=20260604-add-task">
 </head>
 <body>
   <header class="topbar">
@@ -53,7 +53,10 @@
           <p class="column-label"></p>
           <h2></h2>
         </div>
-        <span class="column-count"></span>
+        <div class="column-tools">
+          <span class="column-count"></span>
+          <button class="add-task-button" type="button" title="タスクを追加" aria-label="タスクを追加">+</button>
+        </div>
       </div>
       <div class="task-list"></div>
     </section>
@@ -80,6 +83,68 @@
     </article>
   </template>
 
-  <script type="module" src="./app.js?v=20260604-auth-lock"></script>
+  <dialog id="taskDialog" class="task-dialog">
+    <form id="taskForm" class="task-form">
+      <div class="dialog-head">
+        <div>
+          <p class="column-label">New task</p>
+          <h2 id="taskDialogTitle">タスクを追加</h2>
+        </div>
+        <button id="cancelTaskIconButton" class="icon-button" type="button" aria-label="閉じる">×</button>
+      </div>
+
+      <label>
+        <span>列</span>
+        <select id="taskColumn" name="column" required></select>
+      </label>
+
+      <label>
+        <span>タイトル</span>
+        <input id="taskTitle" name="title" type="text" maxlength="120" required>
+      </label>
+
+      <label>
+        <span>詳細</span>
+        <textarea id="taskDetail" name="detail" rows="4" maxlength="500"></textarea>
+      </label>
+
+      <div class="form-grid">
+        <label>
+          <span>期限</span>
+          <input id="taskDue" name="due" type="date">
+        </label>
+        <label>
+          <span>担当</span>
+          <input id="taskOwner" name="owner" type="text" maxlength="60">
+        </label>
+      </div>
+
+      <div class="form-grid">
+        <label>
+          <span>タグ</span>
+          <input id="taskTag" name="tag" type="text" maxlength="40">
+        </label>
+        <label>
+          <span>色</span>
+          <select id="taskTone" name="tone">
+            <option value="green">Green</option>
+            <option value="blue">Blue</option>
+            <option value="red">Red</option>
+            <option value="pink">Pink</option>
+            <option value="gold">Gold</option>
+          </select>
+        </label>
+      </div>
+
+      <p id="taskFormStatus" class="form-status" aria-live="polite"></p>
+
+      <div class="dialog-actions">
+        <button id="cancelTaskButton" class="button ghost" type="button">キャンセル</button>
+        <button id="saveTaskButton" class="button primary" type="submit">追加</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script type="module" src="./app.js?v=20260604-add-task"></script>
 </body>
 </html>
