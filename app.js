@@ -55,6 +55,8 @@ const state = {
   view: "checking",
   live: false,
   creating: false,
+  updatingOwner: false,
+  editingOwnerTaskId: null,
   savingIds: new Set(),
   unsubscribe: null,
 };
@@ -85,6 +87,15 @@ const elements = {
   cancelTaskButton: document.getElementById("cancelTaskButton"),
   cancelTaskIconButton: document.getElementById("cancelTaskIconButton"),
   saveTaskButton: document.getElementById("saveTaskButton"),
+  ownerDialog: document.getElementById("ownerDialog"),
+  ownerForm: document.getElementById("ownerForm"),
+  ownerDialogTitle: document.getElementById("ownerDialogTitle"),
+  ownerName: document.getElementById("ownerName"),
+  ownerFormStatus: document.getElementById("ownerFormStatus"),
+  useGoogleNameButton: document.getElementById("useGoogleNameButton"),
+  cancelOwnerButton: document.getElementById("cancelOwnerButton"),
+  cancelOwnerIconButton: document.getElementById("cancelOwnerIconButton"),
+  saveOwnerButton: document.getElementById("saveOwnerButton"),
 };
 
 columns.forEach((column) => {
@@ -139,6 +150,24 @@ elements.taskDialog.addEventListener("cancel", (event) => {
   closeTaskDialog();
 });
 
+elements.ownerForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  await saveTaskOwner();
+});
+
+elements.useGoogleNameButton.addEventListener("click", () => {
+  elements.ownerName.value = defaultOwner();
+  elements.ownerName.focus();
+});
+
+elements.cancelOwnerButton.addEventListener("click", closeOwnerDialog);
+elements.cancelOwnerIconButton.addEventListener("click", closeOwnerDialog);
+
+elements.ownerDialog.addEventListener("cancel", (event) => {
+  event.preventDefault();
+  closeOwnerDialog();
+});
+
 onAuthStateChanged(auth, (user) => {
   if (state.unsubscribe) {
     state.unsubscribe();
@@ -148,6 +177,7 @@ onAuthStateChanged(auth, (user) => {
   state.user = user;
   state.allowed = Boolean(user?.email && allowedEmails.has(user.email.toLowerCase()));
   state.live = false;
+  state.editingOwnerTaskId = null;
   updateAuthUI();
 
   if (!user) {
@@ -336,6 +366,60 @@ function closeTaskDialog() {
   elements.taskDialog.close();
 }
 
+function openOwnerDialog(task) {
+  if (!state.allowed || !state.live) {
+    setStatus("保存できないアカウントです。");
+    return;
+  }
+
+  state.editingOwnerTaskId = task.id;
+  elements.ownerForm.reset();
+  elements.ownerName.value = task.owner || defaultOwner();
+  elements.ownerFormStatus.textContent = "";
+  elements.ownerDialogTitle.textContent = "担当を変更";
+  elements.saveOwnerButton.disabled = false;
+  elements.ownerDialog.showModal();
+  elements.ownerName.focus();
+  elements.ownerName.select();
+}
+
+function closeOwnerDialog() {
+  if (state.updatingOwner) return;
+  state.editingOwnerTaskId = null;
+  elements.ownerDialog.close();
+}
+
+async function saveTaskOwner() {
+  if (!state.user || !state.allowed || !state.live || state.updatingOwner || !state.editingOwnerTaskId) {
+    elements.ownerFormStatus.textContent = "保存できない状態です。";
+    return;
+  }
+
+  const owner = elements.ownerName.value.trim() || defaultOwner();
+  state.updatingOwner = true;
+  elements.saveOwnerButton.disabled = true;
+  elements.ownerFormStatus.textContent = "保存中";
+
+  try {
+    await updateDoc(doc(db, COLLECTION, state.editingOwnerTaskId), {
+      owner,
+      updatedAt: serverTimestamp(),
+      updatedBy: state.user.email,
+      ownerUpdatedAt: serverTimestamp(),
+      ownerUpdatedBy: state.user.email,
+      needsObsidianSync: true,
+    });
+    setStatus("Owner updated");
+    state.editingOwnerTaskId = null;
+    elements.ownerDialog.close();
+  } catch (error) {
+    elements.ownerFormStatus.textContent = `Save error: ${error.code}`;
+  } finally {
+    state.updatingOwner = false;
+    elements.saveOwnerButton.disabled = false;
+  }
+}
+
 async function createTaskFromForm() {
   if (!state.user || !state.allowed || !state.live || state.creating) {
     elements.taskFormStatus.textContent = "保存できない状態です。";
@@ -412,10 +496,14 @@ function renderTask(task) {
   title.textContent = task.title;
   detail.textContent = task.detail;
   owner.textContent = task.owner;
+  owner.setAttribute("aria-label", `${task.title}の担当を変更`);
   statePill.textContent = task.done ? "Done" : statusLabel(statusClass);
 
   checkbox.addEventListener("change", () => {
     toggleTask(task, checkbox.checked, checkbox);
+  });
+  owner.addEventListener("click", () => {
+    openOwnerDialog(task);
   });
 
   return card;
@@ -436,7 +524,7 @@ function nextOrder(columnId) {
 
 function defaultOwner() {
   if (!state.user?.email) return "Unassigned";
-  if (state.user.email.toLowerCase() === "hamamicchi@gmail.com") return "Hamada";
+  if (state.user.displayName) return state.user.displayName;
   return state.user.email.split("@")[0];
 }
 
@@ -474,7 +562,7 @@ function normalizeTask(task) {
 
 function updateAuthUI() {
   const user = state.user;
-  elements.authEmail.textContent = user?.email || "";
+  elements.authEmail.textContent = user ? `${defaultOwner()} / ${user.email}` : "";
   elements.loginButton.classList.toggle("hidden", Boolean(user));
   elements.logoutButton.classList.toggle("hidden", !user);
 

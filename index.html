@@ -7,7 +7,7 @@
   <meta name="googlebot" content="noindex,nofollow,noarchive,noimageindex,nosnippet">
   <title>Natto_MASH Board</title>
   <link rel="preconnect" href="https://www.gstatic.com">
-  <link rel="stylesheet" href="./styles.css?v=20260604-add-task">
+  <link rel="stylesheet" href="./styles.css?v=20260604-owner-edit">
 </head>
 <body>
   <header class="topbar">
@@ -76,7 +76,7 @@
         <h3></h3>
         <p class="task-detail"></p>
         <div class="task-foot">
-          <span class="owner"></span>
+          <button class="owner owner-button" type="button"></button>
           <span class="state-pill"></span>
         </div>
       </div>
@@ -145,6 +145,33 @@
     </form>
   </dialog>
 
-  <script type="module" src="./app.js?v=20260604-add-task"></script>
+  <dialog id="ownerDialog" class="task-dialog">
+    <form id="ownerForm" class="task-form">
+      <div class="dialog-head">
+        <div>
+          <p class="column-label">Owner</p>
+          <h2 id="ownerDialogTitle">担当を変更</h2>
+        </div>
+        <button id="cancelOwnerIconButton" class="icon-button" type="button" aria-label="閉じる">×</button>
+      </div>
+
+      <label>
+        <span>担当表示名</span>
+        <input id="ownerName" name="owner" type="text" maxlength="60" required>
+      </label>
+
+      <p id="ownerFormStatus" class="form-status" aria-live="polite"></p>
+
+      <div class="dialog-actions split-actions">
+        <button id="useGoogleNameButton" class="button ghost" type="button">Google名にする</button>
+        <div class="action-pair">
+          <button id="cancelOwnerButton" class="button ghost" type="button">キャンセル</button>
+          <button id="saveOwnerButton" class="button primary" type="submit">保存</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <script type="module" src="./app.js?v=20260604-owner-edit"></script>
 </body>
 </html>

@@ -484,6 +484,16 @@ time {
   background: var(--blue-soft);
 }
 
+.owner-button {
+  border: 0;
+  cursor: pointer;
+}
+
+.owner-button:hover {
+  color: #fffaf2;
+  background: var(--blue);
+}
+
 .state-pill {
   color: var(--muted);
   background: rgba(234, 223, 206, 0.58);
@@ -584,6 +594,16 @@ time {
   justify-content: flex-end;
 }
 
+.split-actions {
+  align-items: center;
+  justify-content: space-between;
+}
+
+.action-pair {
+  display: flex;
+  gap: 10px;
+}
+
 @media (max-width: 860px) {
   .topbar,
   .auth-panel {
@@ -635,5 +655,11 @@ time {
   .dialog-actions {
     align-items: stretch;
     flex-direction: column-reverse;
+  }
+
+  .split-actions,
+  .action-pair {
+    align-items: stretch;
+    flex-direction: column;
   }
 }
