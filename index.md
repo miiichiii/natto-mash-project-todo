@@ -236,6 +236,16 @@ qPCR候補カテゴリ:
 - [ ] 病理定量の個体プロットを作る。
 - [ ] サンプルマスターテーブル完成後、統合図の下書きを作る。
 
+## Firebase Todo app
+
+- [x] 2026-06-04: Firebase側の基本設定を完了した。
+  - Google login enabled.
+  - Cloud Firestore configured.
+  - Access is restricted to approved project members.
+- [ ] 2026-06-14: Todo初期データを作る。
+- [ ] 2026-06-20: checkbox更新がFirestoreへ保存されるMVPを作る。
+- [ ] 2026-06-21: deploy先を決める。
+
 ## 未決定事項
 
 - [ ] どのコホートをin vivo主解析にするか。
