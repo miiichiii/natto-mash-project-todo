@@ -31,7 +31,6 @@ const firebaseConfig = {
 };
 
 const COLLECTION = "nattoMashTasks";
-const allowedEmails = new Set(["hamamicchi@gmail.com", "xxelement8.xii@gmail.com"]);
 
 const columns = [
   { id: "now", label: "Focus", title: "直近" },
@@ -175,7 +174,7 @@ onAuthStateChanged(auth, (user) => {
   }
 
   state.user = user;
-  state.allowed = Boolean(user?.email && allowedEmails.has(user.email.toLowerCase()));
+  state.allowed = Boolean(user);
   state.live = false;
   state.editingOwnerTaskId = null;
   updateAuthUI();
@@ -184,14 +183,6 @@ onAuthStateChanged(auth, (user) => {
     state.tasks = [];
     state.view = "signed-out";
     setStatus("Login required");
-    render();
-    return;
-  }
-
-  if (!state.allowed) {
-    state.tasks = [];
-    state.view = "unauthorized";
-    setStatus("許可されていないアカウントです。");
     render();
     return;
   }
@@ -213,9 +204,16 @@ function subscribeTasks() {
     render();
   }, (error) => {
     state.live = false;
-    state.view = "error";
     state.tasks = [];
-    setStatus(`Firestore error: ${error.code}`);
+    if (error.code === "permission-denied") {
+      state.allowed = false;
+      state.view = "unauthorized";
+      setStatus("閲覧権限がありません");
+      updateAuthUI();
+    } else {
+      state.view = "error";
+      setStatus(`Firestore error: ${error.code}`);
+    }
     render();
   });
 }
