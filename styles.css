@@ -28,11 +28,13 @@
 
 html {
   min-height: 100%;
+  width: 100%;
   background: var(--paper);
 }
 
 body {
   min-height: 100%;
+  width: 100%;
   margin: 0;
   color: var(--ink);
   background:
@@ -141,6 +143,7 @@ h1 {
 }
 
 main {
+  width: 100%;
   padding: 18px clamp(14px, 3vw, 34px) 42px;
 }
 
@@ -192,9 +195,11 @@ main {
   grid-auto-columns: minmax(280px, 340px);
   gap: 14px;
   min-height: calc(100vh - 176px);
+  max-width: 100%;
   overflow-x: auto;
   padding-bottom: 10px;
   scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
 }
 
 .board.is-locked {
@@ -636,8 +641,24 @@ time {
 }
 
 @media (max-width: 560px) {
+  html,
+  body {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .topbar {
+    gap: 14px;
+    padding: 16px 10px;
+  }
+
+  main {
+    padding: 12px 10px 28px;
+  }
+
   .overview {
     grid-template-columns: 1fr 1fr;
+    gap: 8px;
   }
 
   .metric {
@@ -646,6 +667,28 @@ time {
 
   .sync-status {
     min-height: 52px;
+  }
+
+  .board {
+    grid-auto-flow: row;
+    grid-auto-columns: unset;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    min-height: 0;
+    max-width: 100%;
+    overflow-x: visible;
+    padding-bottom: 0;
+    scroll-snap-type: none;
+  }
+
+  .column {
+    min-height: auto;
+    padding: 10px;
+    scroll-snap-align: none;
+  }
+
+  .column-head {
+    min-height: 0;
   }
 
   .form-grid {
