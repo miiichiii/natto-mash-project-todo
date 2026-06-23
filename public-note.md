@@ -26,6 +26,7 @@ Detailed internal task management remains in the Obsidian internal Meta Todo. Th
 ## Recent updates
 
 - 2026-06-23: Switched the visible board from login-only Firestore rendering to GitHub-backed `tasks.json` rendering so tasks can be updated from Codex and published through GitHub Pages.
+- 2026-06-23: Restored the previously synced task set into `tasks.json` and kept the current FACS/Griess additions.
 - 2026-06-23: Added current FACS/cytokine tasks for peritoneal macrophage pilot planning, revised antibody ordering, and Griess assay preparation.
 - 2026-06-15: Main analysis cohort policy updated.
   - The earlier in vivo cohort is now treated as the primary mechanistic cohort because it carries a fibrotic phenotype under the MASH-like condition.
