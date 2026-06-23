@@ -298,8 +298,8 @@ main {
 .add-task-button,
 .icon-button {
   display: inline-grid;
-  width: 32px;
-  height: 28px;
+  min-width: 44px;
+  min-height: 44px;
   place-items: center;
   color: var(--blue);
   background: rgba(255, 250, 242, 0.82);
@@ -326,7 +326,7 @@ main {
 
 .task-card {
   display: grid;
-  grid-template-columns: 28px 1fr;
+  grid-template-columns: 44px 1fr;
   gap: 10px;
   min-height: 132px;
   padding: 12px;
@@ -361,8 +361,8 @@ main {
 
 .check-wrap {
   display: grid;
-  width: 28px;
-  height: 28px;
+  min-width: 44px;
+  min-height: 44px;
   place-items: center;
   cursor: pointer;
 }

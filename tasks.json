@@ -4,7 +4,7 @@
     {
       "id": "rna-sample-table-20260605",
       "title": "RNA-seqサンプル実情報を補完する",
-      "detail": "source sample ID、tube label、ISOGEN量、検体発送日など、オーダーシート提出に必要な実情報を補完する。",
+      "detail": "RNA-seq提出前に必要なサンプル情報を内部表で確認し、発注相談へ進める。",
       "due": "2026-06-06",
       "column": "rna",
       "owner": "古谷/濱田",
@@ -40,7 +40,7 @@
     {
       "id": "pathology-fibrosis-20260614",
       "title": "第2コホート肝臓病理画像と線維化first pass",
-      "detail": "後続コホートは主解析ではなく、予防・再現性確認用として病理画像と線維化first passを整理する。",
+      "detail": "後続コホートの病理画像と線維化評価の初版を整理する。",
       "due": "2026-06-21",
       "column": "mouse",
       "owner": "Student",
@@ -52,7 +52,7 @@
     {
       "id": "serum-cytokine-decision-20260617",
       "title": "血清サイトカイン測定の実施可否を判断する",
-      "detail": "血清残量と優先順位を確認し、測定候補を固定する。",
+      "detail": "血清サイトカイン測定の優先順位と実施可否を内部情報に基づいて判断する。",
       "due": "2026-06-17",
       "column": "mouse",
       "owner": "Hamada",
@@ -64,7 +64,7 @@
     {
       "id": "liposearch-request-sheet-20260618",
       "title": "LipoSEARCH依頼書とサンプルID表を作る",
-      "detail": "主解析サブセットの採用/除外理由、凍結融解回数、残量確認方針、送付条件を表にまとめる。",
+      "detail": "LipoSEARCH依頼に必要な提出情報を内部表で整理し、送付前チェックを行う。",
       "due": "2026-06-18",
       "column": "mouse",
       "owner": "濱田/古谷",
@@ -196,7 +196,7 @@
     {
       "id": "sample-master-v1-20260614",
       "title": "sample master table v1を作る",
-      "detail": "病理、血清、16S、LipoSEARCH、サイトカイン候補を横断的に追える表にし、採用/除外理由を解析前に固定する。",
+      "detail": "病理、血清、16S、LipoSEARCH、サイトカイン候補を横断して追える内部管理表を作る。",
       "due": "2026-06-20",
       "column": "analysis",
       "owner": "Student",
@@ -220,7 +220,7 @@
     {
       "id": "rnaseq-order-sheet-final-check-20260606",
       "title": "RNA-seqオーダーシートを最終確認する",
-      "detail": "腹腔マクロファージ6h・4条件・n=4の初回bulk RNA-seq提出前に、条件名、検体数、請求先、未入力項目を確認する。",
+      "detail": "腹腔マクロファージRNA-seq提出前に、条件名、検体構成、必要書類を確認する。",
       "due": "2026-06-06",
       "column": "rna",
       "owner": "濱田",
@@ -232,7 +232,7 @@
     {
       "id": "liposearch-samples-20260612",
       "title": "LipoSEARCH用Day15血清サンプルを選定する",
-      "detail": "主解析サブセットの採用方針を固定済み。提出前に依頼書、残量、凍結融解回数、送付条件を最終確認する。",
+      "detail": "LipoSEARCH提出候補の内部選定を固定し、依頼準備へ進める。",
       "due": "2026-06-12",
       "column": "mouse",
       "owner": "濱田/古谷",
@@ -244,7 +244,7 @@
     {
       "id": "rna-order-conditions-20260607",
       "title": "i-Lab RNA-seq受託条件を確認する",
-      "detail": "ISOGEN保存のまま受入可否、RNA抽出/QC込み可否、必要量、送付条件、概算費用、納期を確認して固定する。",
+      "detail": "i-Lab RNA-seq受託条件、送付条件、納期を確認して固定する。",
       "due": "2026-06-07",
       "column": "rna",
       "owner": "濱田",
@@ -256,7 +256,7 @@
     {
       "id": "main-cohort-policy-20260615",
       "title": "主解析コホート方針を固定する",
-      "detail": "線維化表現型を持つ早期コホートを主解析、後続コホートを予防・再現性確認用として扱う。公開粒度では個体IDや正確な数値は扱わない。",
+      "detail": "主解析コホートと後続コホートの扱いを内部方針として固定する。",
       "due": "2026-06-15",
       "column": "analysis",
       "owner": "濱田/古谷",
