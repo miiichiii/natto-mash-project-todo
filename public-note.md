@@ -1,28 +1,32 @@
 ---
+layout: default
+title: Natto_MASH Project Todo
 publish: true
 ---
 
 # Natto_MASH Project Board
 
-Status: Login required
-Last updated: 2026-06-15
+Status: GitHub-backed static board
+Last updated: 2026-06-23
 Public URL: https://miiichiii.github.io/natto-mash-project-todo/
 GitHub repository: https://github.com/miiichiii/natto-mash-project-todo
 
 ## Access
 
-The task board is managed in Firebase/Firestore and requires an authorized Google account.
+The task board is rendered from `tasks.json` in the GitHub Pages repository so Codex can update tasks from the local repo and publish them through GitHub.
 
-Task titles, details, deadlines, and checkbox states are intentionally not embedded in the public HTML, JavaScript, or this public note.
+Detailed unpublished values, raw sample IDs, freezer/sample storage details, internal budgets, local file paths, and private contact details are intentionally not included.
 
 ## Public Summary
 
-Natto_MASH is a research project evaluating how natto-related intervention may modify liver injury, inflammation, lipid metabolism, gut-liver axis phenotypes, and fibrosis progression in a mouse MASH-like model.
+Natto_MASH is a research project evaluating how natto-related intervention may modify liver injury, inflammation, lipid metabolism, gut-liver axis phenotypes, and fibrosis progression in a mouse MASH/NASH model.
 
-Detailed task management is restricted to approved project members.
+Detailed internal task management remains in the Obsidian internal Meta Todo. The public board shows only project-safe operational tasks.
 
 ## Recent updates
 
+- 2026-06-23: Switched the visible board from login-only Firestore rendering to GitHub-backed `tasks.json` rendering so tasks can be updated from Codex and published through GitHub Pages.
+- 2026-06-23: Added current FACS/cytokine tasks for peritoneal macrophage pilot planning, revised antibody ordering, and Griess assay preparation.
 - 2026-06-15: Main analysis cohort policy updated.
   - The earlier in vivo cohort is now treated as the primary mechanistic cohort because it carries a fibrotic phenotype under the MASH-like condition.
   - The later in vivo cohort is kept as a prevention / reproducibility reference cohort.

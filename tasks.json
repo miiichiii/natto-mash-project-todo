@@ -1,0 +1,113 @@
+{
+  "lastUpdated": "2026-06-23",
+  "tasks": [
+    {
+      "id": "facs-antibody-panel-recheck-20260623",
+      "title": "腹腔マクロファージFACS抗体パネルを再確認する",
+      "detail": "F4/80 APC/Cy7の在庫、BV450/BV510/BV650の機器対応、CD45/Fc blockの手持ちを確認し、追加注文を3抗体に絞るか判断する。",
+      "due": "2026-06-23",
+      "column": "validation",
+      "owner": "Hamada",
+      "tag": "FACS",
+      "tone": "green",
+      "order": 100,
+      "done": false
+    },
+    {
+      "id": "facs-antibody-order-revise-20260624",
+      "title": "理科研へFACS抗体の修正版発注を連絡する",
+      "detail": "基本候補はI-A/I-E PE、CD86 APC、CD206 PE/Cy7。F4/80 BV650、CD45、Tim-4は確認結果に応じて保留または見送りにする。",
+      "due": "2026-06-24",
+      "column": "validation",
+      "owner": "Hamada",
+      "tag": "Order",
+      "tone": "green",
+      "order": 110,
+      "done": false
+    },
+    {
+      "id": "facs-griess-reagent-20260624",
+      "title": "Griess試薬の在庫と購入要否を確認する",
+      "detail": "LPS/Natto刺激後24h上清でnitriteを測る。標準品、96 well plate、測定波長を含めて実施可能性を確認する。",
+      "due": "2026-06-24",
+      "column": "validation",
+      "owner": "Hamada",
+      "tag": "Griess",
+      "tone": "green",
+      "order": 120,
+      "done": false
+    },
+    {
+      "id": "facs-pilot-design-20260625",
+      "title": "LPS/Natto 4条件のFACS/Griess pilot設計を固定する",
+      "detail": "LPS +/- x Natto +/- で、CD86、MHC-II、CD206、Griessを主readoutにする。single stain compensationと必要なFMOを決める。",
+      "due": "2026-06-25",
+      "column": "validation",
+      "owner": "Hamada",
+      "tag": "Pilot",
+      "tone": "green",
+      "order": 130,
+      "done": false
+    },
+    {
+      "id": "liposearch-request-sheet-20260628",
+      "title": "LipoSEARCH依頼書とサンプルID表を作る",
+      "detail": "採用サンプル、除外理由、血清量、freeze-thaw情報を依頼書と対応表にまとめる。",
+      "due": "2026-06-28",
+      "column": "mouse",
+      "owner": "Hamada/Furuya",
+      "tag": "LipoSEARCH",
+      "tone": "red",
+      "order": 200,
+      "done": false
+    },
+    {
+      "id": "sample-master-v1-20260628",
+      "title": "sample master table v1を作る",
+      "detail": "病理、血清、16S、LipoSEARCH、サイトカイン候補を横断して追える表にする。",
+      "due": "2026-06-28",
+      "column": "analysis",
+      "owner": "Student",
+      "tag": "Sample",
+      "tone": "blue",
+      "order": 300,
+      "done": false
+    },
+    {
+      "id": "rnaseq-order-sheet-final-check-20260606",
+      "title": "RNA-seqオーダーシートを最終確認する",
+      "detail": "腹腔マクロファージ6h・4条件・n=4の初回bulk RNA-seq提出前に、条件名、検体数、請求先、未入力項目を確認する。",
+      "due": "2026-06-06",
+      "column": "rna",
+      "owner": "Hamada",
+      "tag": "RNA-seq",
+      "tone": "blue",
+      "order": 900,
+      "done": true
+    },
+    {
+      "id": "liposearch-samples-20260612",
+      "title": "LipoSEARCH用Day15血清サンプルを選定する",
+      "detail": "採用サンプルと除外理由を解析前に固定する。",
+      "due": "2026-06-12",
+      "column": "mouse",
+      "owner": "Hamada/Furuya",
+      "tag": "LipoSEARCH",
+      "tone": "red",
+      "order": 910,
+      "done": true
+    },
+    {
+      "id": "rna-order-conditions-20260607",
+      "title": "i-Lab RNA-seq受託条件を確認する",
+      "detail": "ISOGEN保存サンプルの受入可否、必要量、送付条件、納期を確認する。",
+      "due": "2026-06-07",
+      "column": "rna",
+      "owner": "Hamada",
+      "tag": "RNA-seq",
+      "tone": "blue",
+      "order": 920,
+      "done": true
+    }
+  ]
+}

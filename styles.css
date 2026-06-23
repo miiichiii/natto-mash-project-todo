@@ -29,6 +29,7 @@
 html {
   min-height: 100%;
   width: 100%;
+  overflow-x: hidden;
   background: var(--paper);
 }
 
@@ -36,6 +37,7 @@ body {
   min-height: 100%;
   width: 100%;
   margin: 0;
+  overflow-x: hidden;
   color: var(--ink);
   background:
     linear-gradient(180deg, rgba(216, 167, 173, 0.24), rgba(246, 239, 228, 0) 320px),
@@ -194,8 +196,11 @@ main {
   grid-auto-flow: column;
   grid-auto-columns: minmax(280px, 340px);
   gap: 14px;
+  width: 100%;
+  min-width: 0;
   min-height: calc(100vh - 176px);
   max-width: 100%;
+  contain: paint;
   overflow-x: auto;
   padding-bottom: 10px;
   scroll-snap-type: x proximity;

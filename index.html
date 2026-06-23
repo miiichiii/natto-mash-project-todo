@@ -6,8 +6,8 @@
   <meta name="robots" content="noindex,nofollow,noarchive,noimageindex,nosnippet">
   <meta name="googlebot" content="noindex,nofollow,noarchive,noimageindex,nosnippet">
   <title>Natto_MASH Board</title>
-  <link rel="preconnect" href="https://www.gstatic.com">
-  <link rel="stylesheet" href="./styles.css?v=20260605-mobile-layout">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="./styles.css?v=20260623-github-tasks-mobile-overflow2">
 </head>
 <body>
   <header class="topbar">
@@ -18,11 +18,9 @@
 
     <div class="auth-panel" aria-live="polite">
       <div class="auth-copy">
-        <span id="authState" class="auth-state">未ログイン</span>
+        <span id="authState" class="auth-state">GitHub表示</span>
         <span id="authEmail" class="auth-email"></span>
       </div>
-      <button id="loginButton" class="button primary" type="button">Googleでログイン</button>
-      <button id="logoutButton" class="button ghost hidden" type="button">ログアウト</button>
     </div>
   </header>
 
@@ -40,7 +38,7 @@
         <span class="metric-label">Near due</span>
         <strong id="soonCount">0</strong>
       </div>
-      <div class="sync-status" id="syncStatus">Login required</div>
+      <div class="sync-status" id="syncStatus">GitHub tasks loading</div>
     </section>
 
     <section id="board" class="board" aria-label="Todo board"></section>
@@ -172,6 +170,6 @@
     </form>
   </dialog>
 
-  <script type="module" src="./app.js?v=20260604-key-restrict"></script>
+  <script type="module" src="./app.js?v=20260623-github-tasks"></script>
 </body>
 </html>
