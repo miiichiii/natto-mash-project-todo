@@ -1,41 +1,41 @@
 ---
 layout: default
-title: Natto_MASH Project Todo
+title: Natto_MASH 管理ボード
 publish: true
 ---
 
-# Natto_MASH Project Board
+# Natto_MASH 管理ボード
 
-Status: GitHub-backed public snapshot with restricted Firestore editing for approved users
-Last updated: 2026-07-07
-Public URL: https://miiichiii.github.io/natto-mash-project-todo/
-GitHub repository: https://github.com/miiichiii/natto-mash-project-todo
+状態: GitHub上の公開スナップショットと、許可ユーザー限定のFirestore編集を併用
+最終更新: 2026-07-07
+公開URL: https://miiichiii.github.io/natto-mash-project-todo/
+GitHubリポジトリ: https://github.com/miiichiii/natto-mash-project-todo
 
-## Access
+## アクセス
 
-The public task snapshot is rendered from `tasks.json` in the GitHub Pages repository. Approved users can log in to edit the Firestore-backed task board in the web UI. Approved users also have access to restricted internal planning views for budget tracking and weekly execution.
+公開タスクのスナップショットは、GitHub Pagesリポジトリ内の `tasks.json` から表示する。許可ユーザーはGoogleログイン後、Firestoreを正本にしたタスクボードをWeb画面から編集できる。許可ユーザーには、予算管理と週次実行計画の内部ビューも表示される。
 
-Detailed unpublished values, raw sample IDs, sample handling details, freezer/sample storage details, internal budgets, local file paths, and private contact details are intentionally not included.
+未公開の詳細数値、個体ID、検体処理の詳細、検体保管場所、内部予算、ローカルファイルパス、個人連絡先は公開版には入れない。
 
-## Public Summary
+## 公開サマリー
 
-Natto_MASH is a research project evaluating how natto-related intervention may modify liver injury, inflammation, lipid metabolism, gut-liver axis phenotypes, and fibrosis progression in a mouse MASH/NASH model.
+Natto_MASHは、マウスMASH/NASHモデルにおいて、納豆関連介入が肝障害、炎症、脂質代謝、腸肝軸表現型、線維化進展にどう影響するかを評価する研究プロジェクトである。
 
-Detailed internal task management remains in the Obsidian internal Meta Todo. The public board shows only project-safe operational tasks.
+詳細な内部タスク管理はObsidianの内部版Meta Todoに残し、公開ボードにはプロジェクト共有上問題ない運用タスクだけを表示する。
 
-## Recent updates
+## 最近の更新
 
-- 2026-07-07: Added restricted, login-only internal planning views for budget tracking and next-week execution. Public files continue to exclude unpublished details and internal budget records.
-- 2026-07-07: Tightened the public snapshot wording so ordering and quote details remain in restricted internal records.
-- 2026-06-23: Restored the login/editing flow while keeping `tasks.json` as a public read-only snapshot.
-- 2026-06-23: Restored the previously synced task set into `tasks.json` and kept the current FACS/Griess additions.
-- 2026-06-23: Added current FACS/cytokine tasks for peritoneal macrophage pilot planning, revised antibody ordering, and Griess assay preparation.
-- 2026-06-15: Main analysis cohort policy updated.
-  - The earlier in vivo cohort is now treated as the primary mechanistic cohort because it carries a fibrotic phenotype under the MASH-like condition.
-  - The later in vivo cohort is kept as a prevention / reproducibility reference cohort.
-  - The current working question is whether natto-related intervention may weaken the link between hepatocellular injury and fibrotic progression, rather than only preventing acute injury.
-- 2026-06-15: LipoSEARCH and serum cytokine sample-selection policy was fixed internally for a small, balanced mechanistic subset.
-- 2026-06-09: LipoSEARCH and serum cytokine candidate samples were finalized internally.
-- 2026-06-06: Macrophage FACS pilot ordering and macrophage RNA-seq sample-sheet work were added to the restricted Kanban board.
+- 2026-07-07: 予算管理と来週実行計画の内部ビューを、ログイン済み許可ユーザー限定で追加。公開ファイルには未公開詳細と内部予算記録を入れない方針を維持。
+- 2026-07-07: 発注・見積の詳細が内部記録に残るよう、公開スナップショットの文言を調整。
+- 2026-06-23: `tasks.json` を公開読み取り専用スナップショットとして残しつつ、ログイン/編集フローを復旧。
+- 2026-06-23: 以前同期したタスク一式を `tasks.json` に戻し、FACS/Griess関連の追加タスクを維持。
+- 2026-06-23: 腹腔マクロファージ試行計画、FACS関連品の発注修正、Griess測定準備に関する現行タスクを追加。
+- 2026-06-15: 主解析コホート方針を更新。
+  - 先行個体実験コホートは、MASH様条件下で線維化表現型を持つため、主要な機序解析コホートとして扱う。
+  - 後続個体実験コホートは、予防/再現性確認の参照コホートとして保持する。
+  - 現在の作業仮説は、納豆関連介入が急性肝障害の予防だけでなく、肝細胞障害から線維化進展への連結を弱めるかどうかである。
+- 2026-06-15: LipoSEARCHと血清サイトカインのサンプル選定方針を、小規模でバランスの取れた機序解析サブセットとして内部で固定。
+- 2026-06-09: LipoSEARCHと血清サイトカインの候補サンプルを内部で確定。
+- 2026-06-06: マクロファージFACS試行発注とマクロファージRNA-seqサンプルシート作成を、制限付きタスクボードに追加。
 
-Note: Raw animal IDs, exact unpublished values, sample handling/storage details, internal budgets, local file paths, and private contact details are intentionally excluded from this public note.
+注: 個体ID、未公開の正確な数値、検体処理/保管の詳細、内部予算、ローカルファイルパス、個人連絡先は、この公開メモから意図的に除外している。

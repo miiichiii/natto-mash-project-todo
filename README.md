@@ -1,18 +1,18 @@
-# Natto_MASH Project Todo
+# Natto_MASH 管理ボード
 
-Public GitHub Pages site for the Natto_MASH project todo.
+Natto_MASHプロジェクトのタスク管理用GitHub Pagesサイト。
 
-Public URL: https://miiichiii.github.io/natto-mash-project-todo/
+公開URL: https://miiichiii.github.io/natto-mash-project-todo/
 
-Site content is maintained as a static Firebase-enabled board:
+サイト本体は、Firebase対応の静的ボードとして管理する。
 
 - `index.html`
 - `styles.css`
 - `app.js`
 
-Firestore collection: `nattoMashTasks`.
+タスク用Firestore collection: `nattoMashTasks`.
 
-Restricted internal collections for approved users:
+許可ユーザー限定の内部collection:
 
 - `nattoMashBudgetFunds`
 - `nattoMashBudgetAllocations`
@@ -21,11 +21,11 @@ Restricted internal collections for approved users:
 - `nattoMashMouseCohortRows`
 - `nattoMashBudgetAuditLog`
 
-Do not add raw animal IDs, unpublished exact numerical results, sample storage locations, internal budgets, personal contact details, or private file paths.
+個体ID、未公開の正確な数値、検体保管場所、内部予算、個人連絡先、非公開ファイルパスを公開静的ファイルに入れない。
 
-Budget and weekly execution data must remain in Firestore only. Do not seed internal amounts or mouse cohort details in `index.html`, `app.js`, `tasks.json`, `public-note.md`, or other public static files.
+予算と週次実行データはFirestoreのみに置く。`index.html`、`app.js`、`tasks.json`、`public-note.md`、その他の公開静的ファイルに、内部金額やマウス群詳細を初期データとして書かない。
 
-Firestore rules must apply the same verified approved-user gate to every restricted internal collection. The local repo does not contain production rules with the real allowlist; use `firestore.rules.example` as the public template and apply the equivalent policy in Firebase:
+Firestore rulesでは、すべての内部collectionに同じ「メール確認済みの許可ユーザー」制限を適用する。このローカルrepoには実allowlist入りの本番rulesを置かない。公開用テンプレートとして `firestore.rules.example` を使い、Firebase側で同等の制限を適用する。
 
 ```txt
 allow read, write: if isApprovedUser()
@@ -33,4 +33,4 @@ allow read, write: if isApprovedUser()
   && request.auth.token.email_verified == true;
 ```
 
-Crawler policy: the site includes `robots.txt` and `noindex` meta tags to discourage indexing. This is not access control.
+クローラー対策として、サイトには `robots.txt` と `noindex` meta tagを入れている。ただし、これはアクセス制御ではない。

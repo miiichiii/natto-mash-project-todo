@@ -5,15 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow,noarchive,noimageindex,nosnippet">
   <meta name="googlebot" content="noindex,nofollow,noarchive,noimageindex,nosnippet">
-  <title>Natto_MASH Board</title>
+  <title>Natto_MASH 管理ボード</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="./styles.css?v=20260707-budget-seeded">
+  <link rel="stylesheet" href="./styles.css?v=20260707-ja">
 </head>
 <body>
   <header class="topbar">
     <div class="title-block">
       <p class="kicker">Natto_MASH</p>
-      <h1>Project Board</h1>
+      <h1>研究管理ボード</h1>
     </div>
 
     <div class="auth-panel" aria-live="polite">
@@ -27,91 +27,91 @@
   </header>
 
   <main>
-    <nav id="viewTabs" class="view-tabs" aria-label="Project views">
-      <button class="view-tab is-active" type="button" data-view="board" aria-selected="true">Board</button>
-      <button class="view-tab hidden" type="button" data-view="budget" aria-selected="false">Budget</button>
-      <button class="view-tab hidden" type="button" data-view="week" aria-selected="false">Next Week</button>
+    <nav id="viewTabs" class="view-tabs" aria-label="表示切替">
+      <button class="view-tab is-active" type="button" data-view="board" aria-selected="true">タスク</button>
+      <button class="view-tab hidden" type="button" data-view="budget" aria-selected="false">予算</button>
+      <button class="view-tab hidden" type="button" data-view="week" aria-selected="false">来週</button>
     </nav>
 
-    <section id="taskOverview" class="overview" aria-label="Project status">
+    <section id="taskOverview" class="overview" aria-label="進捗状況">
       <div class="metric">
-        <span class="metric-label">Total</span>
+        <span class="metric-label">全タスク</span>
         <strong id="totalCount">0</strong>
       </div>
       <div class="metric">
-        <span class="metric-label">Done</span>
+        <span class="metric-label">完了</span>
         <strong id="doneCount">0</strong>
       </div>
       <div class="metric">
-        <span class="metric-label">Near due</span>
+        <span class="metric-label">期限近い</span>
         <strong id="soonCount">0</strong>
       </div>
-      <div class="sync-status" id="syncStatus">GitHub tasks loading</div>
+      <div class="sync-status" id="syncStatus">GitHubタスクを読み込み中</div>
     </section>
 
-    <section id="boardPanel" class="view-panel" aria-label="Todo board">
-      <section id="board" class="board" aria-label="Todo board"></section>
+    <section id="boardPanel" class="view-panel" aria-label="タスクボード">
+      <section id="board" class="board" aria-label="タスクボード"></section>
     </section>
 
-    <section id="budgetPanel" class="view-panel private-panel" aria-label="Budget dashboard" hidden>
+    <section id="budgetPanel" class="view-panel private-panel" aria-label="予算ダッシュボード" hidden>
       <div class="panel-head">
         <div>
-          <p class="column-label">Private ledger</p>
-          <h2>Budget</h2>
+          <p class="column-label">内部台帳</p>
+          <h2>予算</h2>
         </div>
         <div class="panel-actions">
-          <button id="addFundButton" class="button ghost" type="button">Add fund</button>
-          <button id="addAllocationButton" class="button ghost" type="button">Add allocation</button>
-          <button id="addLineItemButton" class="button primary" type="button">Add line item</button>
+          <button id="addFundButton" class="button ghost" type="button">資金枠を追加</button>
+          <button id="addAllocationButton" class="button ghost" type="button">配分枠を追加</button>
+          <button id="addLineItemButton" class="button primary" type="button">支出項目を追加</button>
         </div>
       </div>
 
-      <section id="budgetSummary" class="budget-summary" aria-label="Budget summary"></section>
+      <section id="budgetSummary" class="budget-summary" aria-label="予算サマリー"></section>
 
-      <section class="private-section" aria-label="Allocations">
+      <section class="private-section" aria-label="配分枠">
         <div class="section-head">
-          <h3>Allocations</h3>
+          <h3>配分枠</h3>
         </div>
         <div id="allocationTable"></div>
       </section>
 
-      <section class="private-section" aria-label="Line items">
+      <section class="private-section" aria-label="支出項目">
         <div class="section-head">
-          <h3>Line items</h3>
+          <h3>支出項目</h3>
         </div>
         <div id="lineItemTable"></div>
       </section>
 
-      <section class="private-section" aria-label="Audit log">
+      <section class="private-section" aria-label="更新履歴">
         <div class="section-head">
-          <h3>Audit log</h3>
+          <h3>更新履歴</h3>
         </div>
         <ul id="auditLogList" class="audit-list"></ul>
       </section>
     </section>
 
-    <section id="weekPanel" class="view-panel private-panel" aria-label="Next week plan" hidden>
+    <section id="weekPanel" class="view-panel private-panel" aria-label="来週の実行計画" hidden>
       <div class="panel-head">
         <div>
-          <p class="column-label">Private execution plan</p>
-          <h2>Next Week</h2>
+          <p class="column-label">内部実行計画</p>
+          <h2>来週</h2>
         </div>
         <div class="panel-actions">
-          <button id="addMouseRowButton" class="button ghost" type="button">Add mouse row</button>
-          <button id="addWeeklyItemButton" class="button primary" type="button">Add action</button>
+          <button id="addMouseRowButton" class="button ghost" type="button">マウス行を追加</button>
+          <button id="addWeeklyItemButton" class="button primary" type="button">行動を追加</button>
         </div>
       </div>
 
-      <section class="private-section" aria-label="Weekly actions">
+      <section class="private-section" aria-label="週次アクション">
         <div class="section-head">
-          <h3>Actions</h3>
+          <h3>アクション</h3>
         </div>
         <div id="weeklyPlanList" class="weekly-list"></div>
       </section>
 
-      <section class="private-section" aria-label="Mouse cohort plan">
+      <section class="private-section" aria-label="マウス群分け計画">
         <div class="section-head">
-          <h3>Mouse cohort plan</h3>
+          <h3>マウス群分け計画</h3>
         </div>
         <div id="mouseCohortTable"></div>
       </section>
@@ -159,7 +159,7 @@
     <form id="taskForm" class="task-form">
       <div class="dialog-head">
         <div>
-          <p class="column-label">New task</p>
+          <p class="column-label">新規タスク</p>
           <h2 id="taskDialogTitle">タスクを追加</h2>
         </div>
         <button id="cancelTaskIconButton" class="icon-button" type="button" aria-label="閉じる">×</button>
@@ -199,11 +199,11 @@
         <label>
           <span>色</span>
           <select id="taskTone" name="tone">
-            <option value="green">Green</option>
-            <option value="blue">Blue</option>
-            <option value="red">Red</option>
-            <option value="pink">Pink</option>
-            <option value="gold">Gold</option>
+            <option value="green">緑</option>
+            <option value="blue">青</option>
+            <option value="red">赤</option>
+            <option value="pink">桃</option>
+            <option value="gold">金</option>
           </select>
         </label>
       </div>
@@ -221,7 +221,7 @@
     <form id="ownerForm" class="task-form">
       <div class="dialog-head">
         <div>
-          <p class="column-label">Owner</p>
+          <p class="column-label">担当</p>
           <h2 id="ownerDialogTitle">担当を変更</h2>
         </div>
         <button id="cancelOwnerIconButton" class="icon-button" type="button" aria-label="閉じる">×</button>
@@ -248,7 +248,7 @@
     <form id="privateForm" class="task-form">
       <div class="dialog-head">
         <div>
-          <p class="column-label">Private record</p>
+          <p class="column-label">内部記録</p>
           <h2 id="privateDialogTitle">追加</h2>
         </div>
         <button id="cancelPrivateIconButton" class="icon-button" type="button" aria-label="閉じる">×</button>
@@ -265,6 +265,6 @@
     </form>
   </dialog>
 
-  <script type="module" src="./app.js?v=20260707-budget-seeded"></script>
+  <script type="module" src="./app.js?v=20260707-ja"></script>
 </body>
 </html>
