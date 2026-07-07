@@ -611,6 +611,7 @@ function renderBudget() {
   if (!state.funds.length) {
     elements.budgetSummary.append(renderEmptyState("Firestoreに資金枠がありません。ログイン後にAdd fundから内部台帳を作成してください。"));
   } else {
+    elements.budgetSummary.append(renderGrandTotalCard());
     state.funds.sort(sortByOrder).forEach((fund) => {
       elements.budgetSummary.append(renderFundCard(fund));
     });
@@ -619,6 +620,46 @@ function renderBudget() {
   renderAllocationTable();
   renderLineItemTable();
   renderAuditLog();
+}
+
+function renderGrandTotalCard() {
+  const totals = calculateGrandTotals();
+  const card = document.createElement("article");
+  card.className = "budget-card is-total";
+
+  const head = document.createElement("div");
+  head.className = "budget-card-head";
+  const titleWrap = document.createElement("div");
+  const label = document.createElement("p");
+  label.className = "column-label";
+  label.textContent = "All funds";
+  const title = document.createElement("h3");
+  title.textContent = "Total budget";
+  titleWrap.append(label, title);
+  head.append(titleWrap);
+
+  const grid = document.createElement("div");
+  grid.className = "budget-metric-grid";
+  [
+    ["総額", formatYen(totals.total)],
+    ["支払済み", formatYen(totals.paid)],
+    ["発注済み", formatYen(totals.ordered)],
+    ["見積済み", formatYen(totals.quoted)],
+    ["使用可能", formatYen(totals.availableCash)],
+    ["予測残", formatYen(totals.forecastRemaining)],
+  ].forEach(([name, value]) => {
+    const metric = document.createElement("div");
+    metric.className = "budget-metric";
+    const metricLabel = document.createElement("span");
+    metricLabel.textContent = name;
+    const metricValue = document.createElement("strong");
+    metricValue.textContent = value;
+    metric.append(metricLabel, metricValue);
+    grid.append(metric);
+  });
+
+  card.append(head, grid);
+  return card;
 }
 
 function renderFundCard(fund) {
@@ -1500,6 +1541,18 @@ function calculateFundTotals(fundId) {
     plannedApproved,
     availableCash: total - paid - ordered,
     forecastRemaining: total - paid - ordered - quotedHighConfidence - plannedApproved,
+  };
+}
+
+function calculateGrandTotals() {
+  const fundTotals = state.funds.map((fund) => calculateFundTotals(fund.id));
+  return {
+    total: state.funds.reduce((sum, fund) => sum + toNumber(fund.totalYen), 0),
+    paid: fundTotals.reduce((sum, totals) => sum + totals.paid, 0),
+    ordered: fundTotals.reduce((sum, totals) => sum + totals.ordered, 0),
+    quoted: fundTotals.reduce((sum, totals) => sum + totals.quoted, 0),
+    availableCash: fundTotals.reduce((sum, totals) => sum + totals.availableCash, 0),
+    forecastRemaining: fundTotals.reduce((sum, totals) => sum + totals.forecastRemaining, 0),
   };
 }
 
