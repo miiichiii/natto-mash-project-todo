@@ -1596,8 +1596,10 @@ function nextPrivateOrder(collectionKey) {
 
 function defaultOwner() {
   if (!state.user?.email) return "未担当";
+  const localPart = state.user.email.split("@")[0].toLowerCase();
+  if (/hamad|hamamic|hamamich/.test(`${state.user.displayName || ""} ${localPart}`.toLowerCase())) return "濱田";
   if (state.user.displayName) return state.user.displayName;
-  return state.user.email.split("@")[0];
+  return localPart;
 }
 
 function defaultTag(columnId) {
