@@ -7,7 +7,7 @@
   <meta name="googlebot" content="noindex,nofollow,noarchive,noimageindex,nosnippet">
   <title>Natto_MASH Board</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="./styles.css?v=20260623-hybrid-auth-touch">
+  <link rel="stylesheet" href="./styles.css?v=20260707-budget-weekly-private">
 </head>
 <body>
   <header class="topbar">
@@ -27,7 +27,13 @@
   </header>
 
   <main>
-    <section class="overview" aria-label="Project status">
+    <nav id="viewTabs" class="view-tabs" aria-label="Project views">
+      <button class="view-tab is-active" type="button" data-view="board" aria-selected="true">Board</button>
+      <button class="view-tab hidden" type="button" data-view="budget" aria-selected="false">Budget</button>
+      <button class="view-tab hidden" type="button" data-view="week" aria-selected="false">Next Week</button>
+    </nav>
+
+    <section id="taskOverview" class="overview" aria-label="Project status">
       <div class="metric">
         <span class="metric-label">Total</span>
         <strong id="totalCount">0</strong>
@@ -43,7 +49,73 @@
       <div class="sync-status" id="syncStatus">GitHub tasks loading</div>
     </section>
 
-    <section id="board" class="board" aria-label="Todo board"></section>
+    <section id="boardPanel" class="view-panel" aria-label="Todo board">
+      <section id="board" class="board" aria-label="Todo board"></section>
+    </section>
+
+    <section id="budgetPanel" class="view-panel private-panel" aria-label="Budget dashboard" hidden>
+      <div class="panel-head">
+        <div>
+          <p class="column-label">Private ledger</p>
+          <h2>Budget</h2>
+        </div>
+        <div class="panel-actions">
+          <button id="addFundButton" class="button ghost" type="button">Add fund</button>
+          <button id="addAllocationButton" class="button ghost" type="button">Add allocation</button>
+          <button id="addLineItemButton" class="button primary" type="button">Add line item</button>
+        </div>
+      </div>
+
+      <section id="budgetSummary" class="budget-summary" aria-label="Budget summary"></section>
+
+      <section class="private-section" aria-label="Allocations">
+        <div class="section-head">
+          <h3>Allocations</h3>
+        </div>
+        <div id="allocationTable"></div>
+      </section>
+
+      <section class="private-section" aria-label="Line items">
+        <div class="section-head">
+          <h3>Line items</h3>
+        </div>
+        <div id="lineItemTable"></div>
+      </section>
+
+      <section class="private-section" aria-label="Audit log">
+        <div class="section-head">
+          <h3>Audit log</h3>
+        </div>
+        <ul id="auditLogList" class="audit-list"></ul>
+      </section>
+    </section>
+
+    <section id="weekPanel" class="view-panel private-panel" aria-label="Next week plan" hidden>
+      <div class="panel-head">
+        <div>
+          <p class="column-label">Private execution plan</p>
+          <h2>Next Week</h2>
+        </div>
+        <div class="panel-actions">
+          <button id="addMouseRowButton" class="button ghost" type="button">Add mouse row</button>
+          <button id="addWeeklyItemButton" class="button primary" type="button">Add action</button>
+        </div>
+      </div>
+
+      <section class="private-section" aria-label="Weekly actions">
+        <div class="section-head">
+          <h3>Actions</h3>
+        </div>
+        <div id="weeklyPlanList" class="weekly-list"></div>
+      </section>
+
+      <section class="private-section" aria-label="Mouse cohort plan">
+        <div class="section-head">
+          <h3>Mouse cohort plan</h3>
+        </div>
+        <div id="mouseCohortTable"></div>
+      </section>
+    </section>
   </main>
 
   <template id="columnTemplate">
@@ -172,6 +244,27 @@
     </form>
   </dialog>
 
-  <script type="module" src="./app.js?v=20260623-hybrid-auth-restore"></script>
+  <dialog id="privateDialog" class="task-dialog wide-dialog">
+    <form id="privateForm" class="task-form">
+      <div class="dialog-head">
+        <div>
+          <p class="column-label">Private record</p>
+          <h2 id="privateDialogTitle">追加</h2>
+        </div>
+        <button id="cancelPrivateIconButton" class="icon-button" type="button" aria-label="閉じる">×</button>
+      </div>
+
+      <div id="privateFields" class="private-fields"></div>
+
+      <p id="privateFormStatus" class="form-status" aria-live="polite"></p>
+
+      <div class="dialog-actions">
+        <button id="cancelPrivateButton" class="button ghost" type="button">キャンセル</button>
+        <button id="savePrivateButton" class="button primary" type="submit">追加</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script type="module" src="./app.js?v=20260707-budget-weekly-private"></script>
 </body>
 </html>

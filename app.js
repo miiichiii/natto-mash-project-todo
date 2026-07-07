@@ -18,6 +18,7 @@ import {
   query,
   serverTimestamp,
   updateDoc,
+  writeBatch,
 } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -30,7 +31,32 @@ const firebaseConfig = {
   measurementId: "G-6029DPTZT2",
 };
 
-const COLLECTION = "nattoMashTasks";
+const COLLECTIONS = {
+  tasks: "nattoMashTasks",
+  funds: "nattoMashBudgetFunds",
+  allocations: "nattoMashBudgetAllocations",
+  lineItems: "nattoMashBudgetLineItems",
+  weeklyItems: "nattoMashWeeklyPlanItems",
+  mouseRows: "nattoMashMouseCohortRows",
+  auditLogs: "nattoMashBudgetAuditLog",
+};
+
+const privateSources = [
+  { key: "funds", name: COLLECTIONS.funds, orderBy: "order" },
+  { key: "allocations", name: COLLECTIONS.allocations, orderBy: "order" },
+  { key: "lineItems", name: COLLECTIONS.lineItems, orderBy: "order" },
+  { key: "weeklyItems", name: COLLECTIONS.weeklyItems, orderBy: "order" },
+  { key: "mouseRows", name: COLLECTIONS.mouseRows, orderBy: "order" },
+  { key: "auditLogs", name: COLLECTIONS.auditLogs, orderBy: "createdAt" },
+];
+
+const typeToCollectionKey = {
+  fund: "funds",
+  allocation: "allocations",
+  lineItem: "lineItems",
+  weeklyItem: "weeklyItems",
+  mouseRow: "mouseRows",
+};
 
 const columns = [
   { id: "now", label: "Focus", title: "直近" },
@@ -40,6 +66,34 @@ const columns = [
   { id: "analysis", label: "Figures", title: "解析/図" },
   { id: "done", label: "Archive", title: "完了" },
 ];
+
+const lineItemStatusOptions = [
+  { value: "plannedDraft", label: "予定案" },
+  { value: "plannedApproved", label: "承認済み予定" },
+  { value: "quoted", label: "見積済み" },
+  { value: "ordered", label: "発注済み" },
+  { value: "delivered", label: "納品済み" },
+  { value: "invoiced", label: "請求済み" },
+  { value: "paid", label: "支払済み" },
+  { value: "blocked", label: "保留/詰まり" },
+  { value: "cancelled", label: "中止" },
+];
+
+const weeklyStatusOptions = [
+  { value: "todo", label: "未着手" },
+  { value: "doing", label: "進行中" },
+  { value: "blocked", label: "詰まり" },
+  { value: "decision", label: "判断待ち" },
+  { value: "done", label: "完了" },
+];
+
+const confidenceOptions = [
+  { value: "low", label: "低" },
+  { value: "medium", label: "中" },
+  { value: "high", label: "高" },
+];
+
+const orderedStatuses = new Set(["ordered", "delivered", "invoiced"]);
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -55,17 +109,50 @@ const state = {
   staticTasks: [],
   staticLastUpdated: "",
   staticError: null,
+  activeView: "board",
   view: "checking",
   live: false,
   creating: false,
   updatingOwner: false,
   editingOwnerTaskId: null,
   savingIds: new Set(),
-  unsubscribe: null,
+  unsubscribeTasks: null,
+  privateUnsubscribes: [],
+  privateLoaded: Object.fromEntries(privateSources.map((source) => [source.key, false])),
+  privateReady: false,
+  privateDenied: false,
+  privateError: null,
+  funds: [],
+  allocations: [],
+  lineItems: [],
+  weeklyItems: [],
+  mouseRows: [],
+  auditLogs: [],
+  privateDialogType: null,
+  privateDialogDocId: null,
+  savingPrivate: false,
 };
 
 const elements = {
   board: document.getElementById("board"),
+  boardPanel: document.getElementById("boardPanel"),
+  budgetPanel: document.getElementById("budgetPanel"),
+  weekPanel: document.getElementById("weekPanel"),
+  viewTabs: document.getElementById("viewTabs"),
+  taskOverview: document.getElementById("taskOverview"),
+  budgetTab: document.querySelector("[data-view='budget']"),
+  weekTab: document.querySelector("[data-view='week']"),
+  budgetSummary: document.getElementById("budgetSummary"),
+  allocationTable: document.getElementById("allocationTable"),
+  lineItemTable: document.getElementById("lineItemTable"),
+  auditLogList: document.getElementById("auditLogList"),
+  weeklyPlanList: document.getElementById("weeklyPlanList"),
+  mouseCohortTable: document.getElementById("mouseCohortTable"),
+  addFundButton: document.getElementById("addFundButton"),
+  addAllocationButton: document.getElementById("addAllocationButton"),
+  addLineItemButton: document.getElementById("addLineItemButton"),
+  addWeeklyItemButton: document.getElementById("addWeeklyItemButton"),
+  addMouseRowButton: document.getElementById("addMouseRowButton"),
   loginButton: document.getElementById("loginButton"),
   logoutButton: document.getElementById("logoutButton"),
   authState: document.getElementById("authState"),
@@ -99,6 +186,14 @@ const elements = {
   cancelOwnerButton: document.getElementById("cancelOwnerButton"),
   cancelOwnerIconButton: document.getElementById("cancelOwnerIconButton"),
   saveOwnerButton: document.getElementById("saveOwnerButton"),
+  privateDialog: document.getElementById("privateDialog"),
+  privateForm: document.getElementById("privateForm"),
+  privateDialogTitle: document.getElementById("privateDialogTitle"),
+  privateFields: document.getElementById("privateFields"),
+  privateFormStatus: document.getElementById("privateFormStatus"),
+  cancelPrivateButton: document.getElementById("cancelPrivateButton"),
+  cancelPrivateIconButton: document.getElementById("cancelPrivateIconButton"),
+  savePrivateButton: document.getElementById("savePrivateButton"),
 };
 
 columns.forEach((column) => {
@@ -142,6 +237,18 @@ elements.logoutButton.addEventListener("click", async () => {
   await signOut(auth);
 });
 
+elements.viewTabs.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-view]");
+  if (!button) return;
+  activateView(button.dataset.view);
+});
+
+elements.addFundButton.addEventListener("click", () => openPrivateDialog("fund"));
+elements.addAllocationButton.addEventListener("click", () => openPrivateDialog("allocation"));
+elements.addLineItemButton.addEventListener("click", () => openPrivateDialog("lineItem"));
+elements.addWeeklyItemButton.addEventListener("click", () => openPrivateDialog("weeklyItem"));
+elements.addMouseRowButton.addEventListener("click", () => openPrivateDialog("mouseRow"));
+
 elements.taskForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   await createTaskFromForm();
@@ -173,20 +280,36 @@ elements.ownerDialog.addEventListener("cancel", (event) => {
   closeOwnerDialog();
 });
 
+elements.privateForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  await savePrivateDialog();
+});
+
+elements.cancelPrivateButton.addEventListener("click", closePrivateDialog);
+elements.cancelPrivateIconButton.addEventListener("click", closePrivateDialog);
+
+elements.privateDialog.addEventListener("cancel", (event) => {
+  event.preventDefault();
+  closePrivateDialog();
+});
+
 onAuthStateChanged(auth, (user) => {
-  if (state.unsubscribe) {
-    state.unsubscribe();
-    state.unsubscribe = null;
+  if (state.unsubscribeTasks) {
+    state.unsubscribeTasks();
+    state.unsubscribeTasks = null;
   }
+  unsubscribePrivateData();
 
   state.user = user;
   state.allowed = Boolean(user);
   state.canWrite = false;
   state.live = false;
   state.editingOwnerTaskId = null;
+  resetPrivateState();
   updateAuthUI();
 
   if (!user) {
+    activateView("board", { silent: true });
     showStaticTasks();
     return;
   }
@@ -244,8 +367,8 @@ function showStaticTasks() {
 }
 
 function subscribeTasks() {
-  const tasksQuery = query(collection(db, COLLECTION), orderBy("order"));
-  state.unsubscribe = onSnapshot(tasksQuery, async (snapshot) => {
+  const tasksQuery = query(collection(db, COLLECTIONS.tasks), orderBy("order"));
+  state.unsubscribeTasks = onSnapshot(tasksQuery, async (snapshot) => {
     state.live = true;
     state.view = "live";
     state.allowed = true;
@@ -253,10 +376,19 @@ function subscribeTasks() {
     state.tasks = snapshot.docs.map((taskDoc) => normalizeTask({ id: taskDoc.id, ...taskDoc.data() }));
     setStatus("Firestore synced / 編集可");
     updateAuthUI();
+
+    if (!state.privateUnsubscribes.length && !state.privateReady && !state.privateDenied) {
+      subscribePrivateData();
+    }
+
     render();
   }, (error) => {
     state.live = false;
     state.tasks = [];
+    unsubscribePrivateData();
+    resetPrivateState();
+    activateView("board", { silent: true });
+
     if (error.code === "permission-denied") {
       state.allowed = false;
       state.canWrite = false;
@@ -271,6 +403,63 @@ function subscribeTasks() {
     }
     render();
   });
+}
+
+function subscribePrivateData() {
+  unsubscribePrivateData();
+  state.privateLoaded = Object.fromEntries(privateSources.map((source) => [source.key, false]));
+  state.privateReady = false;
+  state.privateDenied = false;
+  state.privateError = null;
+
+  privateSources.forEach((source) => {
+    const sourceQuery = query(collection(db, source.name), orderBy(source.orderBy));
+    const unsubscribe = onSnapshot(sourceQuery, (snapshot) => {
+      state[source.key] = snapshot.docs.map((entry) => normalizePrivateDoc(source.key, { id: entry.id, ...entry.data() }));
+      state.privateLoaded[source.key] = true;
+      state.privateReady = privateSources.every((candidate) => state.privateLoaded[candidate.key]);
+      if (state.privateReady) {
+        setStatus("Firestore synced / 内部台帳も編集可");
+      }
+      render();
+    }, (error) => {
+      handlePrivateError(error);
+    });
+    state.privateUnsubscribes.push(unsubscribe);
+  });
+}
+
+function handlePrivateError(error) {
+  unsubscribePrivateData();
+  clearPrivateCollections();
+  state.privateReady = false;
+  state.privateDenied = error.code === "permission-denied";
+  state.privateError = error;
+  activateView("board", { silent: true });
+  setStatus(state.privateDenied ? "内部台帳のFirestore権限がありません。" : `内部台帳 error: ${error.code}`);
+  render();
+}
+
+function unsubscribePrivateData() {
+  state.privateUnsubscribes.forEach((unsubscribe) => unsubscribe());
+  state.privateUnsubscribes = [];
+}
+
+function resetPrivateState() {
+  state.privateLoaded = Object.fromEntries(privateSources.map((source) => [source.key, false]));
+  state.privateReady = false;
+  state.privateDenied = false;
+  state.privateError = null;
+  clearPrivateCollections();
+}
+
+function clearPrivateCollections() {
+  state.funds = [];
+  state.allocations = [];
+  state.lineItems = [];
+  state.weeklyItems = [];
+  state.mouseRows = [];
+  state.auditLogs = [];
 }
 
 async function toggleTask(task, done, checkbox) {
@@ -295,7 +484,7 @@ async function toggleTask(task, done, checkbox) {
   render();
 
   try {
-    await updateDoc(doc(db, COLLECTION, task.id), {
+    await updateDoc(doc(db, COLLECTIONS.tasks, task.id), {
       done,
       updatedAt: serverTimestamp(),
       updatedBy: state.user.email,
@@ -315,7 +504,49 @@ async function toggleTask(task, done, checkbox) {
   }
 }
 
+function activateView(view, options = {}) {
+  if (view !== "board" && !canAccessPrivate()) {
+    state.activeView = "board";
+    if (!options.silent) {
+      setStatus(state.user ? "内部台帳の読み込みまたは権限確認が必要です。" : "ログインすると内部台帳を表示できます。");
+    }
+  } else {
+    state.activeView = view;
+  }
+  render();
+}
+
 function render() {
+  renderNavigation();
+  renderBoard();
+  if (canAccessPrivate()) {
+    renderBudget();
+    renderWeek();
+  }
+}
+
+function renderNavigation() {
+  const privateVisible = canAccessPrivate();
+  if (!privateVisible && state.activeView !== "board") {
+    state.activeView = "board";
+  }
+
+  elements.budgetTab.classList.toggle("hidden", !privateVisible);
+  elements.weekTab.classList.toggle("hidden", !privateVisible);
+
+  elements.viewTabs.querySelectorAll("[data-view]").forEach((button) => {
+    const active = button.dataset.view === state.activeView;
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-selected", active ? "true" : "false");
+  });
+
+  elements.taskOverview.hidden = state.activeView !== "board";
+  elements.boardPanel.hidden = state.activeView !== "board";
+  elements.budgetPanel.hidden = state.activeView !== "budget";
+  elements.weekPanel.hidden = state.activeView !== "week";
+}
+
+function renderBoard() {
   if (!["live", "static"].includes(state.view)) {
     elements.totalCount.textContent = "0";
     elements.doneCount.textContent = "0";
@@ -369,6 +600,192 @@ function render() {
 
     elements.board.append(section);
   });
+}
+
+function renderBudget() {
+  elements.budgetSummary.replaceChildren();
+  elements.allocationTable.replaceChildren();
+  elements.lineItemTable.replaceChildren();
+  elements.auditLogList.replaceChildren();
+
+  if (!state.funds.length) {
+    elements.budgetSummary.append(renderEmptyState("Firestoreに資金枠がありません。ログイン後にAdd fundから内部台帳を作成してください。"));
+  } else {
+    state.funds.sort(sortByOrder).forEach((fund) => {
+      elements.budgetSummary.append(renderFundCard(fund));
+    });
+  }
+
+  renderAllocationTable();
+  renderLineItemTable();
+  renderAuditLog();
+}
+
+function renderFundCard(fund) {
+  const totals = calculateFundTotals(fund.id);
+  const card = document.createElement("article");
+  card.className = "budget-card";
+
+  const head = document.createElement("div");
+  head.className = "budget-card-head";
+
+  const titleWrap = document.createElement("div");
+  const label = document.createElement("p");
+  label.className = "column-label";
+  label.textContent = fund.fiscalYear || "Fund";
+  const title = document.createElement("h3");
+  title.textContent = fund.name;
+  titleWrap.append(label, title);
+
+  const edit = smallButton("編集", () => openPrivateDialog("fund", fund));
+  head.append(titleWrap, edit);
+
+  const grid = document.createElement("div");
+  grid.className = "budget-metric-grid";
+  [
+    ["総額", formatYen(fund.totalYen)],
+    ["支払済み", formatYen(totals.paid)],
+    ["発注済み", formatYen(totals.ordered)],
+    ["見積済み", formatYen(totals.quoted)],
+    ["使用可能", formatYen(totals.availableCash)],
+    ["予測残", formatYen(totals.forecastRemaining)],
+  ].forEach(([name, value]) => {
+    const metric = document.createElement("div");
+    metric.className = "budget-metric";
+    const metricLabel = document.createElement("span");
+    metricLabel.textContent = name;
+    const metricValue = document.createElement("strong");
+    metricValue.textContent = value;
+    metric.append(metricLabel, metricValue);
+    grid.append(metric);
+  });
+
+  card.append(head, grid);
+  return card;
+}
+
+function renderAllocationTable() {
+  const columnsForTable = ["配分枠", "資金枠", "区分", "枠金額", "使用予定", "残/超過", "担当", ""];
+  const rows = state.allocations.sort(sortByOrder).map((allocation) => {
+    const used = sumAmounts(state.lineItems.filter((item) => item.allocationId === allocation.id && item.status !== "cancelled"));
+    const remaining = toNumber(allocation.amountYen) - used;
+    return [
+      textCell(allocation.title),
+      textCell(fundName(allocation.fundId)),
+      textCell(allocation.category || "-"),
+      textCell(formatYen(allocation.amountYen)),
+      textCell(formatYen(used)),
+      warningCell(formatYen(remaining), remaining < 0),
+      textCell(allocation.owner || "-"),
+      actionCell("編集", () => openPrivateDialog("allocation", allocation)),
+    ];
+  });
+  elements.allocationTable.append(renderDataTable(columnsForTable, rows, "配分枠は未登録です。"));
+}
+
+function renderLineItemTable() {
+  const columnsForTable = ["状態", "支出line item", "資金/配分", "金額", "期限", "次判断", "担当", ""];
+  const rows = state.lineItems.sort(sortByOrder).map((item) => [
+    statusSelectCell(item.status, lineItemStatusOptions, (nextStatus) => updateLineItemStatus(item, nextStatus)),
+    textCell(item.title),
+    textCell(`${fundName(item.fundId)} / ${allocationName(item.allocationId)}`),
+    textCell(formatYen(lineItemAmount(item))),
+    textCell(renderDeadlineText(item)),
+    textCell(item.nextDecision || item.blockedReason || "-"),
+    textCell(item.owner || "-"),
+    actionCell("編集", () => openPrivateDialog("lineItem", item)),
+  ]);
+  elements.lineItemTable.append(renderDataTable(columnsForTable, rows, "支出line itemは未登録です。"));
+}
+
+function renderAuditLog() {
+  const logs = [...state.auditLogs].sort((a, b) => compareTimestampDesc(a.createdAt, b.createdAt)).slice(0, 8);
+  if (!logs.length) {
+    elements.auditLogList.append(renderEmptyState("audit logはまだありません。"));
+    return;
+  }
+
+  logs.forEach((log) => {
+    const item = document.createElement("li");
+    item.className = "audit-item";
+
+    const title = document.createElement("strong");
+    title.textContent = `${auditActionLabel(log.action)} / ${log.collectionKey || log.collectionName || "-"}`;
+
+    const meta = document.createElement("span");
+    meta.textContent = `${formatTimestamp(log.createdAt)} / ${log.createdBy || "-"}`;
+
+    item.append(title, meta);
+    elements.auditLogList.append(item);
+  });
+}
+
+function renderWeek() {
+  elements.weeklyPlanList.replaceChildren();
+  elements.mouseCohortTable.replaceChildren();
+
+  if (!state.weeklyItems.length) {
+    elements.weeklyPlanList.append(renderEmptyState("Next Week actionは未登録です。Add actionから、期限・成功条件・詰まった時の次行動まで入れてください。"));
+  } else {
+    state.weeklyItems.sort(sortWeeklyItems).forEach((item) => {
+      elements.weeklyPlanList.append(renderWeeklyCard(item));
+    });
+  }
+
+  renderMouseCohortTable();
+}
+
+function renderWeeklyCard(item) {
+  const card = document.createElement("article");
+  card.className = "weekly-card";
+
+  const head = document.createElement("div");
+  head.className = "weekly-card-head";
+
+  const titleWrap = document.createElement("div");
+  const label = document.createElement("p");
+  label.className = "column-label";
+  label.textContent = `${item.weekStart || "week"} / ${item.dueDate ? formatDue(item.dueDate) : "No due"}`;
+  const title = document.createElement("h3");
+  title.textContent = item.title;
+  titleWrap.append(label, title);
+
+  const status = renderStatusSelect(item.status, weeklyStatusOptions, (nextStatus) => updateWeeklyStatus(item, nextStatus));
+  head.append(titleWrap, status);
+
+  const detail = document.createElement("p");
+  detail.className = "private-detail";
+  detail.textContent = item.detail || "";
+
+  const meta = document.createElement("dl");
+  meta.className = "weekly-meta";
+  appendDefinition(meta, "担当", item.owner || "-");
+  appendDefinition(meta, "成功条件", item.successCondition || "-");
+  appendDefinition(meta, "詰まった時", item.fallbackAction || "-");
+  appendDefinition(meta, "予算line item", lineItemTitle(item.lineItemId));
+  appendDefinition(meta, "次判断", item.nextDecision || "-");
+
+  const actions = document.createElement("div");
+  actions.className = "row-actions";
+  actions.append(smallButton("編集", () => openPrivateDialog("weeklyItem", item)));
+
+  card.append(head, detail, meta, actions);
+  return card;
+}
+
+function renderMouseCohortTable() {
+  const columnsForTable = ["Strain/genotype", "出生時期", "予定群", "食餌/開始", "Endpoint", "Readout/検体", "予算line item", ""];
+  const rows = state.mouseRows.sort(sortByOrder).map((row) => [
+    textCell(row.strainGenotype),
+    textCell(row.birthWindow || "-"),
+    textCell(row.plannedGroup || "-"),
+    textCell([row.diet, row.startDate].filter(Boolean).join(" / ") || "-"),
+    textCell(row.endpoint || "-"),
+    textCell([row.readouts, row.samples].filter(Boolean).join(" / ") || "-"),
+    textCell(lineItemTitle(row.lineItemId)),
+    actionCell("編集", () => openPrivateDialog("mouseRow", row)),
+  ]);
+  elements.mouseCohortTable.append(renderDataTable(columnsForTable, rows, "マウス群分け表は未登録です。Add mouse rowから、個体IDではなく群レベルで入力してください。"));
 }
 
 function renderAccessGate() {
@@ -459,6 +876,38 @@ function closeOwnerDialog() {
   elements.ownerDialog.close();
 }
 
+function openPrivateDialog(type, record = null) {
+  if (!canAccessPrivate()) {
+    setStatus("内部台帳の読み込みまたは権限確認が必要です。");
+    return;
+  }
+
+  const config = privateFormConfig(type);
+  state.privateDialogType = type;
+  state.privateDialogDocId = record?.id || null;
+  elements.privateForm.reset();
+  elements.privateFields.replaceChildren();
+  elements.privateFormStatus.textContent = "";
+  elements.privateDialogTitle.textContent = `${record ? "編集" : "追加"}: ${config.title}`;
+  elements.savePrivateButton.textContent = record ? "保存" : "追加";
+  elements.savePrivateButton.disabled = false;
+
+  config.fields.forEach((field) => {
+    elements.privateFields.append(renderPrivateField(field, record));
+  });
+
+  elements.privateDialog.showModal();
+  const firstInput = elements.privateFields.querySelector("input, select, textarea");
+  firstInput?.focus();
+}
+
+function closePrivateDialog() {
+  if (state.savingPrivate) return;
+  state.privateDialogType = null;
+  state.privateDialogDocId = null;
+  elements.privateDialog.close();
+}
+
 async function saveTaskOwner() {
   if (!state.user || !state.allowed || !state.live || !state.canWrite || state.updatingOwner || !state.editingOwnerTaskId) {
     elements.ownerFormStatus.textContent = "保存できない状態です。";
@@ -471,7 +920,7 @@ async function saveTaskOwner() {
   elements.ownerFormStatus.textContent = "保存中";
 
   try {
-    await updateDoc(doc(db, COLLECTION, state.editingOwnerTaskId), {
+    await updateDoc(doc(db, COLLECTIONS.tasks, state.editingOwnerTaskId), {
       owner,
       updatedAt: serverTimestamp(),
       updatedBy: state.user.email,
@@ -533,7 +982,7 @@ async function createTaskFromForm() {
   elements.taskFormStatus.textContent = "保存中";
 
   try {
-    await addDoc(collection(db, COLLECTION), task);
+    await addDoc(collection(db, COLLECTIONS.tasks), task);
     setStatus("Task added");
     elements.taskDialog.close();
   } catch (error) {
@@ -547,6 +996,129 @@ async function createTaskFromForm() {
     state.creating = false;
     elements.saveTaskButton.disabled = false;
   }
+}
+
+async function savePrivateDialog() {
+  if (!state.user || !canAccessPrivate() || state.savingPrivate || !state.privateDialogType) {
+    elements.privateFormStatus.textContent = "保存できない状態です。";
+    return;
+  }
+
+  const config = privateFormConfig(state.privateDialogType);
+  const payload = buildPrivatePayload(config);
+  if (!payload) return;
+  if (!validatePrivatePayload(state.privateDialogType, payload)) return;
+
+  const collectionKey = typeToCollectionKey[state.privateDialogType];
+  const collectionName = COLLECTIONS[collectionKey];
+  const isEdit = Boolean(state.privateDialogDocId);
+  const nowFields = {
+    updatedAt: serverTimestamp(),
+    updatedBy: state.user.email,
+    visibility: "private",
+    schemaVersion: 1,
+  };
+
+  state.savingPrivate = true;
+  elements.savePrivateButton.disabled = true;
+  elements.privateFormStatus.textContent = "保存中";
+
+  try {
+    const batch = writeBatch(db);
+    if (isEdit) {
+      const recordRef = doc(db, collectionName, state.privateDialogDocId);
+      batch.update(recordRef, {
+        ...payload,
+        ...nowFields,
+      });
+      appendAuditToBatch(batch, "update", collectionKey, state.privateDialogDocId, payload);
+      await batch.commit();
+      setStatus("Internal record updated");
+    } else {
+      const recordRef = doc(collection(db, collectionName));
+      batch.set(recordRef, {
+        ...payload,
+        ...nowFields,
+        order: nextPrivateOrder(collectionKey),
+        createdAt: serverTimestamp(),
+        createdBy: state.user.email,
+      });
+      appendAuditToBatch(batch, "create", collectionKey, recordRef.id, payload);
+      await batch.commit();
+      setStatus("Internal record added");
+    }
+    closePrivateDialog();
+  } catch (error) {
+    elements.privateFormStatus.textContent = `Save error: ${error.code}`;
+    if (error.code === "permission-denied") {
+      handlePrivateError(error);
+    }
+  } finally {
+    state.savingPrivate = false;
+    elements.savePrivateButton.disabled = false;
+  }
+}
+
+async function updateLineItemStatus(item, nextStatus) {
+  if (!canAccessPrivate() || item.status === nextStatus) return;
+  const previousStatus = item.status;
+
+  try {
+    const batch = writeBatch(db);
+    batch.update(doc(db, COLLECTIONS.lineItems, item.id), {
+      status: nextStatus,
+      updatedAt: serverTimestamp(),
+      updatedBy: state.user.email,
+    });
+    appendAuditToBatch(batch, "status", "lineItems", item.id, {
+      status: { from: previousStatus, to: nextStatus },
+    });
+    await batch.commit();
+    setStatus("Line item status updated");
+  } catch (error) {
+    setStatus(`Status save error: ${error.code}`);
+    if (error.code === "permission-denied") {
+      handlePrivateError(error);
+    }
+  }
+}
+
+async function updateWeeklyStatus(item, nextStatus) {
+  if (!canAccessPrivate() || item.status === nextStatus) return;
+  const previousStatus = item.status;
+
+  try {
+    const batch = writeBatch(db);
+    batch.update(doc(db, COLLECTIONS.weeklyItems, item.id), {
+      status: nextStatus,
+      updatedAt: serverTimestamp(),
+      updatedBy: state.user.email,
+    });
+    appendAuditToBatch(batch, "status", "weeklyItems", item.id, {
+      status: { from: previousStatus, to: nextStatus },
+    });
+    await batch.commit();
+    setStatus("Weekly action status updated");
+  } catch (error) {
+    setStatus(`Status save error: ${error.code}`);
+    if (error.code === "permission-denied") {
+      handlePrivateError(error);
+    }
+  }
+}
+
+function appendAuditToBatch(batch, action, collectionKey, docId, changes) {
+  const auditRef = doc(collection(db, COLLECTIONS.auditLogs));
+  batch.set(auditRef, {
+    action,
+    collectionKey,
+    docId,
+    changes: sanitizeForFirestore(changes),
+    createdAt: serverTimestamp(),
+    createdBy: state.user?.email || "",
+    visibility: "private",
+    schemaVersion: 1,
+  });
 }
 
 function renderTask(task, editable) {
@@ -594,6 +1166,360 @@ function renderTask(task, editable) {
   return card;
 }
 
+function renderPrivateField(field, record) {
+  const label = document.createElement("label");
+  label.className = field.kind === "checkbox" ? "checkbox-field" : "";
+  if (field.kind === "textarea") {
+    label.classList.add("wide-field");
+  }
+  const span = document.createElement("span");
+  span.textContent = field.label;
+
+  let control;
+  if (field.kind === "textarea") {
+    control = document.createElement("textarea");
+    control.rows = field.rows || 3;
+  } else if (field.kind === "select") {
+    control = document.createElement("select");
+    field.options().forEach((optionConfig) => {
+      const option = document.createElement("option");
+      option.value = optionConfig.value;
+      option.textContent = optionConfig.label;
+      control.append(option);
+    });
+  } else {
+    control = document.createElement("input");
+    control.type = field.kind || "text";
+  }
+
+  control.id = `private-${field.name}`;
+  control.name = field.name;
+  control.required = Boolean(field.required);
+  if (field.maxLength) control.maxLength = field.maxLength;
+
+  if (field.kind === "checkbox") {
+    control.checked = record ? Boolean(record[field.name]) : Boolean(field.defaultValue);
+  } else {
+    const value = record?.[field.name] ?? field.defaultValue ?? "";
+    control.value = value;
+  }
+
+  label.append(span, control);
+  return label;
+}
+
+function renderDataTable(headings, rows, emptyText) {
+  if (!rows.length) {
+    return renderEmptyState(emptyText);
+  }
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "table-scroll";
+  const table = document.createElement("table");
+  table.className = "data-table";
+
+  const thead = document.createElement("thead");
+  const headRow = document.createElement("tr");
+  headings.forEach((heading) => {
+    const th = document.createElement("th");
+    th.scope = "col";
+    th.textContent = heading;
+    headRow.append(th);
+  });
+  thead.append(headRow);
+
+  const tbody = document.createElement("tbody");
+  rows.forEach((row) => {
+    const tr = document.createElement("tr");
+    row.forEach((cell) => {
+      const td = document.createElement("td");
+      if (cell instanceof Node) {
+        td.append(cell);
+      } else {
+        td.textContent = String(cell);
+      }
+      tr.append(td);
+    });
+    tbody.append(tr);
+  });
+
+  table.append(thead, tbody);
+  wrapper.append(table);
+  return wrapper;
+}
+
+function renderEmptyState(text) {
+  const empty = document.createElement("div");
+  empty.className = "empty";
+  empty.textContent = text;
+  return empty;
+}
+
+function renderStatusSelect(value, options, onChange) {
+  const select = document.createElement("select");
+  select.className = "status-select";
+  options.forEach((optionConfig) => {
+    const option = document.createElement("option");
+    option.value = optionConfig.value;
+    option.textContent = optionConfig.label;
+    select.append(option);
+  });
+  select.value = value || options[0]?.value || "";
+  select.addEventListener("change", () => onChange(select.value));
+  return select;
+}
+
+function statusSelectCell(value, options, onChange) {
+  return renderStatusSelect(value, options, onChange);
+}
+
+function textCell(value) {
+  const span = document.createElement("span");
+  span.textContent = value || "-";
+  return span;
+}
+
+function warningCell(value, isWarning) {
+  const span = textCell(value);
+  span.classList.toggle("warning-text", Boolean(isWarning));
+  return span;
+}
+
+function actionCell(label, handler) {
+  const wrap = document.createElement("div");
+  wrap.className = "row-actions";
+  wrap.append(smallButton(label, handler));
+  return wrap;
+}
+
+function smallButton(label, handler) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "button ghost small-button";
+  button.textContent = label;
+  button.addEventListener("click", handler);
+  return button;
+}
+
+function appendDefinition(list, term, description) {
+  const dt = document.createElement("dt");
+  dt.textContent = term;
+  const dd = document.createElement("dd");
+  dd.textContent = description;
+  list.append(dt, dd);
+}
+
+function privateFormConfig(type) {
+  const configs = {
+    fund: {
+      title: "資金枠",
+      fields: [
+        { name: "name", label: "資金枠名", required: true, maxLength: 120 },
+        { name: "totalYen", label: "総額（税込想定）", kind: "number", required: true },
+        { name: "fiscalYear", label: "年度", maxLength: 40 },
+        { name: "owner", label: "担当", maxLength: 80, defaultValue: defaultOwner() },
+        { name: "notes", label: "メモ", kind: "textarea", maxLength: 1000 },
+      ],
+    },
+    allocation: {
+      title: "配分枠",
+      fields: [
+        { name: "fundId", label: "資金枠", kind: "select", required: true, options: fundOptions },
+        { name: "title", label: "配分枠名", required: true, maxLength: 140 },
+        { name: "category", label: "区分", maxLength: 80 },
+        { name: "amountYen", label: "枠金額", kind: "number" },
+        { name: "owner", label: "担当", maxLength: 80, defaultValue: defaultOwner() },
+        { name: "notes", label: "メモ", kind: "textarea", maxLength: 1000 },
+      ],
+    },
+    lineItem: {
+      title: "支出line item",
+      fields: [
+        { name: "fundId", label: "資金枠", kind: "select", required: true, options: fundOptions },
+        { name: "allocationId", label: "配分枠", kind: "select", options: allocationOptions },
+        { name: "title", label: "支出名", required: true, maxLength: 160 },
+        { name: "status", label: "状態", kind: "select", required: true, options: () => lineItemStatusOptions, defaultValue: "plannedDraft" },
+        { name: "amountYenTaxIncluded", label: "金額（税込・正本）", kind: "number", required: true },
+        { name: "amountYenTaxExcluded", label: "金額（税抜・参考）", kind: "number" },
+        { name: "quoteDate", label: "見積日", kind: "date" },
+        { name: "orderDeadline", label: "最遅発注日", kind: "date" },
+        { name: "orderedAt", label: "発注日", kind: "date" },
+        { name: "expectedDeliveryDate", label: "納品予定日", kind: "date" },
+        { name: "paidAt", label: "支払日", kind: "date" },
+        { name: "owner", label: "担当", maxLength: 80, defaultValue: defaultOwner() },
+        { name: "confidence", label: "見積信頼度", kind: "select", options: () => confidenceOptions, defaultValue: "medium" },
+        { name: "blockedReason", label: "詰まり", kind: "textarea", maxLength: 800 },
+        { name: "nextDecision", label: "次判断", kind: "textarea", maxLength: 800 },
+        { name: "notes", label: "メモ", kind: "textarea", maxLength: 1000 },
+      ],
+    },
+    weeklyItem: {
+      title: "Next Week action",
+      fields: [
+        { name: "weekStart", label: "週開始日", kind: "date", required: true },
+        { name: "title", label: "Action", required: true, maxLength: 160 },
+        { name: "detail", label: "詳細", kind: "textarea", maxLength: 1000 },
+        { name: "dueDate", label: "期限", kind: "date" },
+        { name: "owner", label: "担当", maxLength: 80, defaultValue: defaultOwner() },
+        { name: "status", label: "状態", kind: "select", required: true, options: () => weeklyStatusOptions, defaultValue: "todo" },
+        { name: "lineItemId", label: "予算line item", kind: "select", options: lineItemOptions },
+        { name: "successCondition", label: "成功条件", kind: "textarea", maxLength: 800 },
+        { name: "fallbackAction", label: "詰まった時の次行動", kind: "textarea", maxLength: 800 },
+        { name: "nextDecision", label: "金曜判断", kind: "textarea", maxLength: 800 },
+      ],
+    },
+    mouseRow: {
+      title: "マウス群分け行",
+      fields: [
+        { name: "strainGenotype", label: "Strain/genotype", required: true, maxLength: 120 },
+        { name: "birthWindow", label: "出生時期", maxLength: 80 },
+        { name: "plannedGroup", label: "予定群", maxLength: 120 },
+        { name: "diet", label: "食餌", maxLength: 120 },
+        { name: "startDate", label: "開始日", kind: "date" },
+        { name: "endpoint", label: "Endpoint", maxLength: 120 },
+        { name: "readouts", label: "Readout", kind: "textarea", maxLength: 1000 },
+        { name: "samples", label: "必要検体", kind: "textarea", maxLength: 1000 },
+        { name: "lineItemId", label: "予算line item", kind: "select", options: lineItemOptions },
+        { name: "owner", label: "担当", maxLength: 80, defaultValue: defaultOwner() },
+        { name: "privateFlag", label: "公開不可フラグ", kind: "checkbox", defaultValue: true },
+        { name: "notes", label: "メモ", kind: "textarea", maxLength: 1000 },
+      ],
+    },
+  };
+
+  return configs[type];
+}
+
+function buildPrivatePayload(config) {
+  const payload = {};
+  const formData = new FormData(elements.privateForm);
+
+  for (const field of config.fields) {
+    const control = elements.privateForm.elements[field.name];
+    let value;
+
+    if (field.kind === "checkbox") {
+      value = Boolean(control?.checked);
+    } else {
+      value = String(formData.get(field.name) ?? "").trim();
+    }
+
+    if (field.required && (value === "" || value === null || value === undefined)) {
+      elements.privateFormStatus.textContent = `${field.label}を入力してください。`;
+      control?.focus();
+      return null;
+    }
+
+    if (field.kind === "number") {
+      payload[field.name] = value === "" ? null : Number(value);
+      if (payload[field.name] !== null && !Number.isFinite(payload[field.name])) {
+        elements.privateFormStatus.textContent = `${field.label}は数値で入力してください。`;
+        control?.focus();
+        return null;
+      }
+      if (payload[field.name] !== null && payload[field.name] < 0) {
+        elements.privateFormStatus.textContent = `${field.label}は0以上で入力してください。`;
+        control?.focus();
+        return null;
+      }
+    } else {
+      payload[field.name] = value;
+    }
+  }
+
+  return payload;
+}
+
+function validatePrivatePayload(type, payload) {
+  if (type === "lineItem") {
+    if (!Number.isFinite(payload.amountYenTaxIncluded) || payload.amountYenTaxIncluded < 0) {
+      elements.privateFormStatus.textContent = "支出line itemは税込金額を0以上で入力してください。";
+      elements.privateForm.elements.amountYenTaxIncluded?.focus();
+      return false;
+    }
+
+    if (payload.allocationId) {
+      const allocation = state.allocations.find((candidate) => candidate.id === payload.allocationId);
+      if (allocation && allocation.fundId !== payload.fundId) {
+        elements.privateFormStatus.textContent = "配分枠と資金枠が一致していません。";
+        elements.privateForm.elements.allocationId?.focus();
+        return false;
+      }
+    }
+  }
+
+  if (type === "allocation" && payload.fundId && payload.amountYen !== null) {
+    const fundTotal = toNumber(state.funds.find((fund) => fund.id === payload.fundId)?.totalYen);
+    if (fundTotal && payload.amountYen > fundTotal) {
+      elements.privateFormStatus.textContent = "配分枠が資金枠の総額を超えています。";
+      elements.privateForm.elements.amountYen?.focus();
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function fundOptions() {
+  const options = state.funds.sort(sortByOrder).map((fund) => ({ value: fund.id, label: fund.name }));
+  return options.length ? options : [{ value: "", label: "資金枠を先に追加" }];
+}
+
+function allocationOptions() {
+  return [
+    { value: "", label: "未指定" },
+    ...state.allocations.sort(sortByOrder).map((allocation) => ({ value: allocation.id, label: allocation.title })),
+  ];
+}
+
+function lineItemOptions() {
+  return [
+    { value: "", label: "未指定" },
+    ...state.lineItems.sort(sortByOrder).map((item) => ({ value: item.id, label: item.title })),
+  ];
+}
+
+function canAccessPrivate() {
+  return Boolean(state.user && state.allowed && state.live && state.canWrite && state.privateReady && !state.privateDenied);
+}
+
+function calculateFundTotals(fundId) {
+  const items = state.lineItems.filter((item) => item.fundId === fundId);
+  const paid = sumAmounts(items.filter((item) => item.status === "paid"));
+  const ordered = sumAmounts(items.filter((item) => orderedStatuses.has(item.status)));
+  const quoted = sumAmounts(items.filter((item) => item.status === "quoted"));
+  const quotedHighConfidence = sumAmounts(items.filter((item) => item.status === "quoted" && item.confidence === "high"));
+  const plannedApproved = sumAmounts(items.filter((item) => item.status === "plannedApproved"));
+  const total = toNumber(state.funds.find((fund) => fund.id === fundId)?.totalYen);
+
+  return {
+    paid,
+    ordered,
+    quoted,
+    quotedHighConfidence,
+    plannedApproved,
+    availableCash: total - paid - ordered,
+    forecastRemaining: total - paid - ordered - quotedHighConfidence - plannedApproved,
+  };
+}
+
+function sumAmounts(items) {
+  return items.reduce((sum, item) => sum + lineItemAmount(item), 0);
+}
+
+function lineItemAmount(item) {
+  return toNumber(item.amountYenTaxIncluded);
+}
+
+function renderDeadlineText(item) {
+  const values = [
+    item.orderDeadline ? `発注 ${formatDue(item.orderDeadline)}` : "",
+    item.expectedDeliveryDate ? `納品 ${formatDue(item.expectedDeliveryDate)}` : "",
+    item.paidAt ? `支払 ${formatDue(item.paidAt)}` : "",
+  ].filter(Boolean);
+  return values.join(" / ") || "-";
+}
+
 function nextOrder(columnId) {
   const columnOrders = state.tasks
     .filter((task) => (task.done ? "done" : task.column) === columnId)
@@ -605,6 +1531,13 @@ function nextOrder(columnId) {
   }
 
   return Math.max(...columnOrders) + 10;
+}
+
+function nextPrivateOrder(collectionKey) {
+  const orders = state[collectionKey]
+    .map((entry) => entry.order)
+    .filter(Number.isFinite);
+  return orders.length ? Math.max(...orders) + 10 : 100;
 }
 
 function defaultOwner() {
@@ -639,7 +1572,7 @@ function updateAuthUI() {
     elements.authState.textContent = "未ログイン";
     elements.authEmail.textContent = state.view === "static" ? "GitHub tasks / ログインで編集" : "";
   } else if (state.allowed && state.live && state.canWrite) {
-    elements.authState.textContent = "ログイン中";
+    elements.authState.textContent = state.privateReady ? "ログイン中" : "内部台帳確認中";
     elements.authEmail.textContent = `${defaultOwner()} / ${user.email}`;
   } else if (state.allowed) {
     elements.authState.textContent = "読み取り中";
@@ -669,6 +1602,61 @@ function normalizeTask(task) {
   };
 }
 
+function normalizePrivateDoc(key, entry) {
+  if (key === "funds") {
+    return {
+      ...entry,
+      name: entry.name || "Untitled fund",
+      totalYen: toNumber(entry.totalYen),
+      order: toNumber(entry.order, 999),
+    };
+  }
+
+  if (key === "allocations") {
+    return {
+      ...entry,
+      title: entry.title || "Untitled allocation",
+      amountYen: toNumber(entry.amountYen),
+      order: toNumber(entry.order, 999),
+    };
+  }
+
+  if (key === "lineItems") {
+    return {
+      ...entry,
+      title: entry.title || "Untitled line item",
+      status: entry.status || "plannedDraft",
+      amountYenTaxIncluded: nullableNumber(entry.amountYenTaxIncluded),
+      amountYenTaxExcluded: nullableNumber(entry.amountYenTaxExcluded),
+      confidence: entry.confidence || "medium",
+      order: toNumber(entry.order, 999),
+    };
+  }
+
+  if (key === "weeklyItems") {
+    return {
+      ...entry,
+      title: entry.title || "Untitled action",
+      status: entry.status || "todo",
+      order: toNumber(entry.order, 999),
+    };
+  }
+
+  if (key === "mouseRows") {
+    return {
+      ...entry,
+      strainGenotype: entry.strainGenotype || "Untitled cohort",
+      privateFlag: entry.privateFlag !== false,
+      order: toNumber(entry.order, 999),
+    };
+  }
+
+  return {
+    ...entry,
+    order: toNumber(entry.order, 999),
+  };
+}
+
 function taskSorter(a, b) {
   if (a.done !== b.done) return Number(a.done) - Number(b.done);
   if (a.column !== b.column) {
@@ -677,10 +1665,46 @@ function taskSorter(a, b) {
   return a.order - b.order;
 }
 
+function sortByOrder(a, b) {
+  return toNumber(a.order, 999) - toNumber(b.order, 999);
+}
+
+function sortWeeklyItems(a, b) {
+  if ((a.weekStart || "") !== (b.weekStart || "")) return (a.weekStart || "").localeCompare(b.weekStart || "");
+  if ((a.dueDate || "") !== (b.dueDate || "")) return (a.dueDate || "").localeCompare(b.dueDate || "");
+  return sortByOrder(a, b);
+}
+
+function fundName(fundId) {
+  return state.funds.find((fund) => fund.id === fundId)?.name || "未指定";
+}
+
+function allocationName(allocationId) {
+  if (!allocationId) return "未指定";
+  return state.allocations.find((allocation) => allocation.id === allocationId)?.title || "未指定";
+}
+
+function lineItemTitle(lineItemId) {
+  if (!lineItemId) return "未指定";
+  return state.lineItems.find((item) => item.id === lineItemId)?.title || "未指定";
+}
+
 function formatDue(value) {
   const date = parseDate(value);
   if (!date) return "No due";
   return new Intl.DateTimeFormat("ja-JP", { month: "numeric", day: "numeric" }).format(date);
+}
+
+function formatTimestamp(value) {
+  if (!value) return "-";
+  const date = value.toDate ? value.toDate() : new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  return new Intl.DateTimeFormat("ja-JP", {
+    month: "numeric",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
 }
 
 function dueClass(value) {
@@ -700,8 +1724,53 @@ function statusLabel(status) {
   return "Open";
 }
 
+function auditActionLabel(action) {
+  if (action === "create") return "追加";
+  if (action === "update") return "更新";
+  if (action === "status") return "状態変更";
+  return action || "変更";
+}
+
+function formatYen(value) {
+  return new Intl.NumberFormat("ja-JP", {
+    style: "currency",
+    currency: "JPY",
+    maximumFractionDigits: 0,
+  }).format(toNumber(value));
+}
+
 function parseDate(value) {
   if (!value) return null;
   const date = new Date(`${value}T00:00:00`);
   return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function toNumber(value, fallback = 0) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : fallback;
+}
+
+function nullableNumber(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
+function compareTimestampDesc(a, b) {
+  return timestampMillis(b) - timestampMillis(a);
+}
+
+function timestampMillis(value) {
+  if (!value) return 0;
+  const date = value.toDate ? value.toDate() : new Date(value);
+  return Number.isNaN(date.getTime()) ? 0 : date.getTime();
+}
+
+function sanitizeForFirestore(value) {
+  if (Array.isArray(value)) return value.map(sanitizeForFirestore);
+  if (value && typeof value === "object") {
+    return Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, sanitizeForFirestore(entry)]));
+  }
+  if (value === undefined) return null;
+  return value;
 }

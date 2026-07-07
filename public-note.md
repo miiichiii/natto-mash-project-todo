@@ -6,14 +6,14 @@ publish: true
 
 # Natto_MASH Project Board
 
-Status: GitHub-backed public snapshot with Firestore editing for approved users
-Last updated: 2026-06-23
+Status: GitHub-backed public snapshot with restricted Firestore editing for approved users
+Last updated: 2026-07-07
 Public URL: https://miiichiii.github.io/natto-mash-project-todo/
 GitHub repository: https://github.com/miiichiii/natto-mash-project-todo
 
 ## Access
 
-The public task snapshot is rendered from `tasks.json` in the GitHub Pages repository. Approved users can log in to edit the Firestore-backed task board in the web UI.
+The public task snapshot is rendered from `tasks.json` in the GitHub Pages repository. Approved users can log in to edit the Firestore-backed task board in the web UI. Approved users also have access to restricted internal planning views for budget tracking and weekly execution.
 
 Detailed unpublished values, raw sample IDs, sample handling details, freezer/sample storage details, internal budgets, local file paths, and private contact details are intentionally not included.
 
@@ -25,6 +25,8 @@ Detailed internal task management remains in the Obsidian internal Meta Todo. Th
 
 ## Recent updates
 
+- 2026-07-07: Added restricted, login-only internal planning views for budget tracking and next-week execution. Public files continue to exclude unpublished details and internal budget records.
+- 2026-07-07: Tightened the public snapshot wording so ordering and quote details remain in restricted internal records.
 - 2026-06-23: Restored the login/editing flow while keeping `tasks.json` as a public read-only snapshot.
 - 2026-06-23: Restored the previously synced task set into `tasks.json` and kept the current FACS/Griess additions.
 - 2026-06-23: Added current FACS/cytokine tasks for peritoneal macrophage pilot planning, revised antibody ordering, and Griess assay preparation.

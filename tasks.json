@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-06-23",
+  "lastUpdated": "2026-07-07",
   "tasks": [
     {
       "id": "rna-sample-table-20260605",
@@ -76,7 +76,7 @@
     {
       "id": "facs-antibody-order-peritoneal-macrophage-pilot-20260607",
       "title": "腹腔マクロファージFACS pilot用抗体を発注する",
-      "detail": "6/5理科研見積をもとに、腹腔マクロファージpilot用抗体を発注する。CD86を本命、Tim-4は別チューブまたはresident確認用として扱う。",
+      "detail": "腹腔マクロファージpilot用の発注可否を内部台帳で確認し、必要な購入手続きを進める。",
       "due": "2026-06-07",
       "column": "validation",
       "owner": "濱田",
@@ -88,7 +88,7 @@
     {
       "id": "facs-peritoneal-macrophage-two-tube-design-20260610",
       "title": "腹腔マクロファージFACSの2チューブ設計を確定する",
-      "detail": "CD86-APCとTim-4-AF647の同時使用を避け、activation確認とresident確認を分けたpilot設計にする。必要なら色変更も検討する。",
+      "detail": "activation確認とresident確認の設計を内部表で整理し、pilot実験に必要な設定を固定する。",
       "due": "2026-06-10",
       "column": "validation",
       "owner": "濱田",
@@ -112,7 +112,7 @@
     {
       "id": "facs-antibody-panel-recheck-20260623",
       "title": "腹腔マクロファージFACS抗体パネルを再確認する",
-      "detail": "F4/80 APC/Cy7の在庫、BV450/BV510/BV650の機器対応、CD45/Fc blockの手持ちを確認し、追加注文を3抗体に絞るか判断する。",
+      "detail": "内部在庫と機器対応を確認し、追加購入が必要な項目を内部台帳で判断する。",
       "due": "2026-06-23",
       "column": "validation",
       "owner": "Hamada",
@@ -123,8 +123,8 @@
     },
     {
       "id": "facs-antibody-order-revise-20260624",
-      "title": "理科研へFACS抗体の修正版発注を連絡する",
-      "detail": "基本候補はI-A/I-E PE、CD86 APC、CD206 PE/Cy7。F4/80 BV650、CD45、Tim-4は確認結果に応じて保留または見送りにする。",
+      "title": "FACS関連品の修正版発注を連絡する",
+      "detail": "内部で確定した発注候補について、代理店への連絡と発注状態の更新を行う。",
       "due": "2026-06-24",
       "column": "validation",
       "owner": "Hamada",
@@ -136,7 +136,7 @@
     {
       "id": "facs-griess-reagent-20260624",
       "title": "Griess試薬の在庫と購入要否を確認する",
-      "detail": "LPS/Natto刺激後24h上清でnitriteを測る。標準品、96 well plate、測定波長を含めて実施可能性を確認する。",
+      "detail": "pilot実験に必要な試薬と測定環境を確認し、購入要否を内部台帳で判断する。",
       "due": "2026-06-24",
       "column": "validation",
       "owner": "Hamada",
@@ -148,7 +148,7 @@
     {
       "id": "facs-pilot-design-20260625",
       "title": "LPS/Natto 4条件のFACS/Griess pilot設計を固定する",
-      "detail": "LPS +/- x Natto +/- で、CD86、MHC-II、CD206、Griessを主readoutにする。single stain compensationと必要なFMOを決める。",
+      "detail": "刺激条件と主要readoutを整理し、compensationと対照条件を含めてpilot設計を固定する。",
       "due": "2026-06-25",
       "column": "validation",
       "owner": "Hamada",
@@ -243,8 +243,8 @@
     },
     {
       "id": "rna-order-conditions-20260607",
-      "title": "i-Lab RNA-seq受託条件を確認する",
-      "detail": "i-Lab RNA-seq受託条件、送付条件、納期を確認して固定する。",
+      "title": "RNA-seq受託条件を確認する",
+      "detail": "RNA-seq受託条件、送付条件、納期を確認して内部台帳へ反映する。",
       "due": "2026-06-07",
       "column": "rna",
       "owner": "濱田",

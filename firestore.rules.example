@@ -1,0 +1,47 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isApprovedUser() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email in [
+          // Keep the real allowlist in Firebase Console or a private rules file.
+          // Do not commit personal email addresses to this public repository.
+          "approved-user@example.com",
+        ];
+    }
+
+    match /nattoMashTasks/{taskId} {
+      allow read, write: if isApprovedUser();
+    }
+
+    match /nattoMashBudgetFunds/{docId} {
+      allow read, write: if isApprovedUser();
+    }
+
+    match /nattoMashBudgetAllocations/{docId} {
+      allow read, write: if isApprovedUser();
+    }
+
+    match /nattoMashBudgetLineItems/{docId} {
+      allow read, write: if isApprovedUser();
+    }
+
+    match /nattoMashWeeklyPlanItems/{docId} {
+      allow read, write: if isApprovedUser();
+    }
+
+    match /nattoMashMouseCohortRows/{docId} {
+      allow read, write: if isApprovedUser();
+    }
+
+    match /nattoMashBudgetAuditLog/{docId} {
+      allow read, write: if isApprovedUser();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
