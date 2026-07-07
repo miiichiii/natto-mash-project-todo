@@ -420,6 +420,7 @@ function subscribePrivateData() {
       state.privateReady = privateSources.every((candidate) => state.privateLoaded[candidate.key]);
       if (state.privateReady) {
         setStatus("Firestore synced / 内部台帳も編集可");
+        updateAuthUI();
       }
       render();
     }, (error) => {
